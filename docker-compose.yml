@@ -1,0 +1,123 @@
+version: "3.9"
+
+services:
+  # === PostgreSQL with PostGIS ===
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: aeiras_db
+    environment:
+      POSTGRES_USER: aeiras
+      POSTGRES_PASSWORD: aeiras_pass
+      POSTGRES_DB: aeiras_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U aeiras" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # === Redis ===
+  redis:
+    image: redis:7-alpine
+    container_name: aeiras_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # === FastAPI Backend ===
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aeiras_backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://aeiras:aeiras_pass@db:5432/aeiras_db
+      DATABASE_URL_SYNC: postgresql://aeiras:aeiras_pass@db:5432/aeiras_db
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-jwt-secret-change-me}
+      DEBUG: "false"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ml_models:/app/app/ml/models
+    restart: unless-stopped
+
+  # === Celery Worker ===
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aeiras_celery
+    command: celery -A app.tasks worker --loglevel=info --concurrency=4
+    environment:
+      DATABASE_URL: postgresql+asyncpg://aeiras:aeiras_pass@db:5432/aeiras_db
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    depends_on:
+      - backend
+      - redis
+    restart: unless-stopped
+
+  # === Celery Beat (Scheduler) ===
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aeiras_beat
+    command: celery -A app.tasks beat --loglevel=info
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # === Flower (Celery Monitoring) ===
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aeiras_flower
+    command: celery -A app.tasks flower --port=5555
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # === React Frontend ===
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aeiras_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  ml_models:
