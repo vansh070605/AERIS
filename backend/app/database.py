@@ -17,7 +17,6 @@ def _create_engine():
         engine = create_async_engine(
             settings.DATABASE_URL,
             echo=settings.DEBUG,
-            connect_args={"check_same_thread": False},
         )
     else:
         # PostgreSQL + PostGIS
