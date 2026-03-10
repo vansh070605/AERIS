@@ -3,7 +3,7 @@ import { NavLink, Outlet, Navigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard, Map, Truck, Radio, BarChart3,
     AlertTriangle, Shield, Wifi, WifiOff, Bell, LogOut,
-    ChevronRight, Activity, Zap
+    ChevronRight, Activity, Zap, Sparkles
 } from 'lucide-react';
 import { useAuthStore, useUIStore, useEmergencyStore } from '../store';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
     { to: '/resources', icon: Truck, label: 'Resources', accent: '#00e5a0' },
     { to: '/dispatch', icon: Radio, label: 'Dispatch', accent: '#ffc947' },
     { to: '/analytics', icon: BarChart3, label: 'Analytics', accent: '#a78bfa' },
+    { to: '/demo', icon: Sparkles, label: 'How It Works', accent: '#ffc947' },
 ];
 
 const ROLE_COLORS = {

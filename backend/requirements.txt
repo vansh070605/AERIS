@@ -28,6 +28,10 @@ networkx==3.2.1
 shapely==2.0.2
 pyproj==3.6.1
 geopy==2.4.1
+osmnx
+
+# SQLite async
+aiosqlite
 
 # Task Queue
 celery==5.3.6

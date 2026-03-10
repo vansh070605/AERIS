@@ -51,6 +51,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"ML model init warning: {e}")
 
+    # Seed synthetic Chennai incidents
+    async with AsyncSessionLocal() as db:
+        try:
+            from app.utils.chennai_incidents import seed_incidents
+            await seed_incidents(db, n=5000)
+            await db.commit()
+        except Exception as e:
+            logger.error(f"Incident seeding error: {e}")
+            await db.rollback()
+
     logger.info("=== AEIRAS Ready ===")
     yield
 

@@ -10,6 +10,7 @@ import EmergenciesPage from './pages/EmergenciesPage';
 import ResourcesPage from './pages/ResourcesPage';
 import DispatchPage from './pages/DispatchPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import DemoPage from './pages/DemoPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/resources" element={<ResourcesPage />} />
             <Route path="/dispatch" element={<DispatchPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/demo" element={<DemoPage />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Route>
 

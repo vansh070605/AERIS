@@ -1,21 +1,32 @@
 """
 Geospatial Routing Engine
 Uses NetworkX + Dijkstra/A* to compute optimal resource dispatch routes.
-Precomputes travel time matrix for fast dispatch decisions.
+Supports OSMnx real road network for Chennai or falls back to synthetic grid.
 """
 
 import networkx as nx
 import numpy as np
 import math
+import os
 import logging
 from typing import List, Dict, Tuple, Optional, Any
 from dataclasses import dataclass
 from geopy.distance import geodesic
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 EARTH_RADIUS_KM = 6371.0
-AVG_SPEED_KMH = 60.0  # Average emergency vehicle speed
+AVG_SPEED_KMH = 40.0  # Average emergency vehicle speed in Chennai traffic
+
+# Chennai bounding box
+CHENNAI_BOUNDS = {
+    "lat_min": 12.85, "lat_max": 13.25,
+    "lon_min": 80.05, "lon_max": 80.35,
+}
+
+GRAPH_CACHE_DIR = Path("app/data")
+GRAPH_CACHE_FILE = GRAPH_CACHE_DIR / "chennai_graph.graphml"
 
 
 @dataclass
@@ -52,21 +63,76 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 
 class CityGraph:
     """
-    Synthetic city graph for routing.
-    In production, replace with OSMnx or a real road network.
+    Chennai road network graph.
+    Attempts to load real road data via OSMnx, falls back to synthetic grid.
     """
 
-    def __init__(self, grid_size: int = 20, city_bounds: Dict = None):
+    def __init__(self, grid_size: int = 25, city_bounds: Dict = None):
         self.grid_size = grid_size
-        self.city_bounds = city_bounds or {
-            "lat_min": 28.4, "lat_max": 28.8,
-            "lon_min": 77.0, "lon_max": 77.4
-        }
+        self.city_bounds = city_bounds or CHENNAI_BOUNDS
         self.graph = nx.DiGraph()
+        self._node_coords = {}  # node_id -> (lat, lon) for fast lookup
+        self._use_osmnx = False
+
+        # Always build grid first (instant, ~0.3s)
         self._build_grid_graph()
 
+        # If a cached OSMnx graph exists on disk, load it (no download)
+        if self._try_load_cached_osmnx():
+            self._use_osmnx = True
+            logger.info("Upgraded to cached OSMnx Chennai road network")
+
+    def _try_load_cached_osmnx(self) -> bool:
+        """Load OSMnx graph ONLY from a pre-cached file. Never downloads."""
+        try:
+            import osmnx as ox
+
+            GRAPH_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+            if not GRAPH_CACHE_FILE.exists():
+                logger.info("No cached OSMnx graph found — using synthetic grid")
+                logger.info("Run 'python -m app.services.routing_service' to download the graph")
+                return False
+
+            logger.info(f"Loading cached Chennai graph from {GRAPH_CACHE_FILE}")
+            G = ox.load_graphml(GRAPH_CACHE_FILE)
+
+            # Replace the grid graph with the real road network
+            self.graph = nx.DiGraph()
+            self._node_coords = {}
+
+            for node, data in G.nodes(data=True):
+                node_id = str(node)
+                lat = data.get("y", 0)
+                lon = data.get("x", 0)
+                self.graph.add_node(node_id, lat=lat, lon=lon, pos=(lon, lat))
+                self._node_coords[node_id] = (lat, lon)
+
+            for u, v, data in G.edges(data=True):
+                src_id = str(u)
+                dst_id = str(v)
+                dist_m = data.get("length", 100)
+                dist_km = dist_m / 1000.0
+                speed = data.get("speed_kph", AVG_SPEED_KMH)
+                if isinstance(speed, list):
+                    speed = float(speed[0])
+                travel_time = (dist_km / max(speed, 10)) * 60
+                self.graph.add_edge(src_id, dst_id, weight=travel_time, distance=dist_km)
+
+            logger.info(
+                f"OSMnx graph loaded: {self.graph.number_of_nodes()} nodes, "
+                f"{self.graph.number_of_edges()} edges"
+            )
+            return True
+
+        except ImportError:
+            return False
+        except Exception as e:
+            logger.warning(f"Failed to load cached graph: {e} — keeping grid")
+            return False
+
     def _build_grid_graph(self):
-        """Build a grid-based road network graph."""
+        """Build a grid-based road network graph for Chennai."""
         bounds = self.city_bounds
         lats = np.linspace(bounds["lat_min"], bounds["lat_max"], self.grid_size)
         lons = np.linspace(bounds["lon_min"], bounds["lon_max"], self.grid_size)
@@ -76,6 +142,7 @@ class CityGraph:
             for j, lon in enumerate(lons):
                 node_id = f"n_{i}_{j}"
                 self.graph.add_node(node_id, lat=lat, lon=lon, pos=(lon, lat))
+                self._node_coords[node_id] = (lat, lon)
 
         # Add edges (8-directional connectivity)
         directions = [(0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)]
@@ -94,17 +161,27 @@ class CityGraph:
                         travel_time = (dist / AVG_SPEED_KMH) * 60 * traffic
                         self.graph.add_edge(src, dst, weight=travel_time, distance=dist)
 
-        logger.info(f"City graph built: {self.graph.number_of_nodes()} nodes, {self.graph.number_of_edges()} edges")
+        logger.info(f"Synthetic Chennai grid built: {self.graph.number_of_nodes()} nodes, {self.graph.number_of_edges()} edges")
 
     def find_nearest_node(self, lat: float, lon: float) -> str:
         """Find the nearest graph node to a geographic coordinate."""
         min_dist = float("inf")
         nearest = None
-        for node, data in self.graph.nodes(data=True):
-            d = haversine_distance(lat, lon, data["lat"], data["lon"])
-            if d < min_dist:
-                min_dist = d
-                nearest = node
+
+        # If we have precomputed coords, use them for speed
+        if self._node_coords:
+            for node_id, (n_lat, n_lon) in self._node_coords.items():
+                d = (n_lat - lat) ** 2 + (n_lon - lon) ** 2
+                if d < min_dist:
+                    min_dist = d
+                    nearest = node_id
+        else:
+            for node, data in self.graph.nodes(data=True):
+                d = (data["lat"] - lat) ** 2 + (data["lon"] - lon) ** 2
+                if d < min_dist:
+                    min_dist = d
+                    nearest = node
+
         return nearest
 
     def shortest_path_dijkstra(
@@ -116,7 +193,6 @@ class CityGraph:
             total_time = nx.shortest_path_length(self.graph, source, target, weight="weight")
             return total_time, path
         except nx.NetworkXNoPath:
-            # Fall back to straight-line time estimate
             src_data = self.graph.nodes[source]
             tgt_data = self.graph.nodes[target]
             dist = haversine_distance(src_data["lat"], src_data["lon"], tgt_data["lat"], tgt_data["lon"])
@@ -162,7 +238,7 @@ class RoutingService:
     def __init__(self):
         self.city_graph = CityGraph()
         self._travel_time_cache: Dict[Tuple, float] = {}
-        logger.info("RoutingService initialized")
+        logger.info("RoutingService initialized (Chennai)")
 
     def compute_travel_time(
         self,

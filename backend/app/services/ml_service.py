@@ -162,6 +162,14 @@ class MLService:
     def __init__(self):
         self._load_models()
 
+    @property
+    def is_trained(self) -> bool:
+        return self._model is not None
+
+    def train_model(self):
+        train_model()
+        self._load_models()
+
     def _load_models(self):
         """Load pre-trained models from disk, train if not present."""
         try:

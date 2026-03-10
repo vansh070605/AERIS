@@ -81,5 +81,7 @@ export const getEquity = () => api.get('/analytics/equity');
 export const getDashboardStats = () => api.get('/analytics/dashboard');
 export const getResponseTimes = (params) => api.get('/analytics/response-times', { params });
 export const getEarlyWarnings = () => api.get('/analytics/early-warning');
+export const getHotspots = (params) => api.get('/analytics/hotspots', { params });
+export const getZoneRisk = (params) => api.get('/analytics/zone-risk', { params });
 
 export default api;

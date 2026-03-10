@@ -87,3 +87,46 @@ async def get_early_warnings(
     Identifies zones at elevated risk based on recent incident frequency patterns.
     """
     return await analytics_service.get_early_warning_predictions(db)
+
+
+@router.get("/hotspots")
+async def get_hotspots(
+    hours: int = Query(default=720, ge=1, le=2160,
+                       description="Look-back window in hours"),
+    emergency_type: Optional[str] = Query(default=None),
+    eps_km: float = Query(default=0.5, ge=0.1, le=5.0,
+                          description="DBSCAN cluster radius in km"),
+    min_samples: int = Query(default=5, ge=2, le=50),
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_viewer),
+):
+    """
+    Detect emergency hotspots using DBSCAN clustering.
+    Returns cluster centers, risk scores, dominant types, and geometry.
+    """
+    from app.services.hotspot_service import hotspot_service
+    return await hotspot_service.detect_hotspots(
+        db=db,
+        hours=hours,
+        emergency_type=emergency_type,
+        eps_km=eps_km,
+        min_samples=min_samples,
+    )
+
+
+@router.get("/zone-risk")
+async def get_zone_risk(
+    n_clusters: int = Query(default=8, ge=2, le=20),
+    hours: int = Query(default=720, ge=1, le=2160),
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_viewer),
+):
+    """
+    K-Means zone-level risk analysis for resource positioning optimization.
+    """
+    from app.services.hotspot_service import hotspot_service
+    return await hotspot_service.zone_risk_analysis(
+        db=db,
+        n_clusters=n_clusters,
+        hours=hours,
+    )

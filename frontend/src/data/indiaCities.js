@@ -112,6 +112,22 @@ export const ALL_INDIA_CITIES = [
 
     // ── Tamil Nadu ─────────────────────────────────────────────────────
     { name: 'Chennai', state: 'Tamil Nadu', lat: 13.0827, lng: 80.2707 },
+    // Chennai localities
+    { name: 'T. Nagar', state: 'Tamil Nadu', lat: 13.0418, lng: 80.2341 },
+    { name: 'Anna Nagar', state: 'Tamil Nadu', lat: 13.0850, lng: 80.2100 },
+    { name: 'Adyar', state: 'Tamil Nadu', lat: 13.0012, lng: 80.2565 },
+    { name: 'Mylapore', state: 'Tamil Nadu', lat: 13.0368, lng: 80.2676 },
+    { name: 'Velachery', state: 'Tamil Nadu', lat: 12.9815, lng: 80.2180 },
+    { name: 'Tambaram', state: 'Tamil Nadu', lat: 12.9249, lng: 80.1278 },
+    { name: 'Egmore', state: 'Tamil Nadu', lat: 13.0732, lng: 80.2609 },
+    { name: 'Sholinganallur', state: 'Tamil Nadu', lat: 12.9010, lng: 80.2279 },
+    { name: 'Ambattur', state: 'Tamil Nadu', lat: 13.1143, lng: 80.1548 },
+    { name: 'Avadi', state: 'Tamil Nadu', lat: 13.1145, lng: 80.1010 },
+    { name: 'Royapuram', state: 'Tamil Nadu', lat: 13.1130, lng: 80.2940 },
+    { name: 'Tondiarpet', state: 'Tamil Nadu', lat: 13.1275, lng: 80.2830 },
+    { name: 'Porur', state: 'Tamil Nadu', lat: 13.0383, lng: 80.1565 },
+    { name: 'OMR Thoraipakkam', state: 'Tamil Nadu', lat: 12.9600, lng: 80.2420 },
+    { name: 'Guindy', state: 'Tamil Nadu', lat: 13.0067, lng: 80.2206 },
     { name: 'Coimbatore', state: 'Tamil Nadu', lat: 11.0168, lng: 76.9558 },
     { name: 'Madurai', state: 'Tamil Nadu', lat: 9.9252, lng: 78.1198 },
     { name: 'Trichy', state: 'Tamil Nadu', lat: 10.7905, lng: 78.7047 },

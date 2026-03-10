@@ -1,6 +1,6 @@
 """
-AEIRAS Simulation Engine
-Generates 1000 synthetic emergencies, tests the dispatch system,
+AEIRAS Simulation Engine — Chennai
+Generates synthetic emergencies, tests the dispatch system,
 and outputs comprehensive performance metrics.
 
 Usage:
@@ -30,27 +30,30 @@ logger = logging.getLogger("simulation")
 
 EMERGENCY_TYPES = ["medical", "fire", "accident", "flood", "crime", "other"]
 
-# Delhi NCR bounding box
-LAT_RANGE = (28.38, 28.88)
-LON_RANGE = (76.84, 77.52)
+# Chennai bounding box
+LAT_RANGE = (12.85, 13.25)
+LON_RANGE = (80.05, 80.35)
 
-# Resource positions (from seed data)
+# Chennai resource positions (from seed data)
 MOCK_RESOURCES = [
-    {"id": 1, "latitude": 28.6448, "longitude": 77.2167, "resource_type": "ambulance"},
-    {"id": 2, "latitude": 28.7041, "longitude": 77.1025, "resource_type": "ambulance"},
-    {"id": 3, "latitude": 28.5245, "longitude": 77.2066, "resource_type": "ambulance"},
-    {"id": 4, "latitude": 28.6282, "longitude": 77.3285, "resource_type": "ambulance"},
-    {"id": 5, "latitude": 28.5355, "longitude": 77.3910, "resource_type": "ambulance"},
-    {"id": 6, "latitude": 28.6339, "longitude": 77.2090, "resource_type": "fire_truck"},
-    {"id": 7, "latitude": 28.6517, "longitude": 77.0880, "resource_type": "fire_truck"},
-    {"id": 8, "latitude": 28.4595, "longitude": 77.0266, "resource_type": "fire_truck"},
-    {"id": 9, "latitude": 28.6592, "longitude": 77.2276, "resource_type": "police_unit"},
-    {"id": 10, "latitude": 28.7086, "longitude": 77.1324, "resource_type": "police_unit"},
-    {"id": 11, "latitude": 28.5244, "longitude": 77.1855, "resource_type": "police_unit"},
-    {"id": 12, "latitude": 28.4089, "longitude": 77.3178, "resource_type": "police_unit"},
-    {"id": 13, "latitude": 28.6139, "longitude": 77.2090, "resource_type": "rescue_team"},
-    {"id": 14, "latitude": 28.5700, "longitude": 77.3200, "resource_type": "rescue_team"},
-    {"id": 15, "latitude": 28.6800, "longitude": 77.1500, "resource_type": "hazmat_unit"},
+    {"id": 1,  "latitude": 13.0604, "longitude": 80.2780, "resource_type": "ambulance"},
+    {"id": 2,  "latitude": 13.1145, "longitude": 80.2890, "resource_type": "ambulance"},
+    {"id": 3,  "latitude": 13.0843, "longitude": 80.2429, "resource_type": "ambulance"},
+    {"id": 4,  "latitude": 13.0067, "longitude": 80.2206, "resource_type": "ambulance"},
+    {"id": 5,  "latitude": 12.9850, "longitude": 80.2270, "resource_type": "ambulance"},
+    {"id": 6,  "latitude": 12.9550, "longitude": 80.1410, "resource_type": "ambulance"},
+    {"id": 7,  "latitude": 13.0032, "longitude": 80.2572, "resource_type": "ambulance"},
+    {"id": 8,  "latitude": 12.9100, "longitude": 80.2300, "resource_type": "ambulance"},
+    {"id": 9,  "latitude": 13.0860, "longitude": 80.2430, "resource_type": "fire_truck"},
+    {"id": 10, "latitude": 13.0400, "longitude": 80.2480, "resource_type": "fire_truck"},
+    {"id": 11, "latitude": 13.0340, "longitude": 80.2700, "resource_type": "fire_truck"},
+    {"id": 12, "latitude": 13.1250, "longitude": 80.2820, "resource_type": "fire_truck"},
+    {"id": 13, "latitude": 13.0606, "longitude": 80.2610, "resource_type": "police_unit"},
+    {"id": 14, "latitude": 13.0020, "longitude": 80.2560, "resource_type": "police_unit"},
+    {"id": 15, "latitude": 13.0870, "longitude": 80.2130, "resource_type": "police_unit"},
+    {"id": 16, "latitude": 13.0700, "longitude": 80.2500, "resource_type": "rescue_team"},
+    {"id": 17, "latitude": 12.9400, "longitude": 80.1350, "resource_type": "rescue_team"},
+    {"id": 18, "latitude": 13.1650, "longitude": 80.2630, "resource_type": "hazmat_unit"},
 ]
 
 
@@ -169,7 +172,7 @@ def compute_metrics(results: List[Dict]) -> Dict[str, Any]:
 def print_report(metrics: Dict):
     """Pretty-print simulation report."""
     print("\n" + "=" * 65)
-    print("  AEIRAS SIMULATION REPORT")
+    print("  AEIRAS SIMULATION REPORT — CHENNAI")
     print("=" * 65)
     print(f"  Total Emergencies   : {metrics['total_emergencies']}")
     print(f"  Successful Dispatches: {metrics['successful_dispatches']}")
@@ -202,7 +205,7 @@ def print_report(metrics: Dict):
 
 def run_simulation(n: int = 1000, output_path: str = None) -> Dict:
     """Run the full simulation."""
-    logger.info(f"Starting simulation with {n} emergencies...")
+    logger.info(f"Starting Chennai simulation with {n} emergencies...")
 
     results = []
     start_total = time.perf_counter()
@@ -216,7 +219,7 @@ def run_simulation(n: int = 1000, output_path: str = None) -> Dict:
 
         # Routing
         # Use all resources as "available" for simulation
-        available = random.sample(MOCK_RESOURCES, k=min(8, len(MOCK_RESOURCES)))
+        available = random.sample(MOCK_RESOURCES, k=min(10, len(MOCK_RESOURCES)))
         routing_result = run_routing(emergency, available)
 
         results.append({
@@ -234,6 +237,7 @@ def run_simulation(n: int = 1000, output_path: str = None) -> Dict:
     metrics["total_simulation_time_sec"] = round(total_time, 2)
     metrics["avg_throughput_per_sec"] = round(n / total_time, 1)
     metrics["generated_at"] = datetime.utcnow().isoformat()
+    metrics["city"] = "Chennai"
 
     print_report(metrics)
 
@@ -246,7 +250,7 @@ def run_simulation(n: int = 1000, output_path: str = None) -> Dict:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="AEIRAS Simulation Engine")
+    parser = argparse.ArgumentParser(description="AEIRAS Chennai Simulation Engine")
     parser.add_argument("--n", type=int, default=1000, help="Number of emergencies")
     parser.add_argument("--output", type=str, default="simulation_results.json")
     args = parser.parse_args()
