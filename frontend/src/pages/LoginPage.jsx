@@ -5,9 +5,9 @@ import { login, getMe } from '../services/api';
 import { Shield, AlertTriangle, Eye, EyeOff, Zap, Lock, User } from 'lucide-react';
 
 const DEMO_ROLES = [
-    { role: 'admin', label: 'Admin', icon: '⚡', color: '#ff4060', u: 'admin', p: 'Admin123!' },
-    { role: 'dispatcher', label: 'Dispatcher', icon: '📡', color: '#00d4ff', u: 'dispatcher1', p: 'Disp123!' },
-    { role: 'viewer', label: 'Viewer', icon: '👁️', color: '#a78bfa', u: 'viewer1', p: 'View123!' },
+    { role: 'admin', label: 'Admin', icon: '⚡', color: '#ff4060', u: 'admin', p: 'Admin@AEIRAS2024' },
+    { role: 'dispatcher', label: 'Dispatcher', icon: '📡', color: '#00d4ff', u: 'dispatcher1', p: 'Dispatch@123' },
+    { role: 'viewer', label: 'Viewer', icon: '👁️', color: '#a78bfa', u: 'viewer1', p: 'Viewer@123' },
 ];
 
 export default function LoginPage() {

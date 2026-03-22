@@ -1,258 +1,208 @@
 """
-AEIRAS Simulation Engine — Chennai
-Generates synthetic emergencies, tests the dispatch system,
-and outputs comprehensive performance metrics.
-
-Usage:
-    python -m simulation.run_simulation --n 1000 --output simulation_results.json
+Flood Scenario Simulator — tests the flood response pipeline end-to-end.
+Generates monsoon rainfall events, simulates flood spread, dispatches resources,
+and compares optimal (Hungarian) vs greedy allocation.
 """
 
-import asyncio
-import random
+import sys
 import time
 import json
-import argparse
+import random
+import asyncio
 import logging
 import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, List, Any
 from pathlib import Path
+from datetime import datetime, timedelta
+from typing import Dict, Any, List
 
-# Add backend to path
-import sys
+# Add parent dir
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.services.ml_service import ml_service
-from app.services.routing_service import routing_service
+from app.services.ml_service import FloodMLService, train_flood_models
+from app.services.routing_service import FloodRoutingService
+from app.services.resource_allocation_service import ResourceAllocationService
+from app.services.flood_simulation_service import FloodSimulationService
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("simulation")
+logger = logging.getLogger(__name__)
 
-EMERGENCY_TYPES = ["medical", "fire", "accident", "flood", "crime", "other"]
 
-# Chennai bounding box
-LAT_RANGE = (12.85, 13.25)
-LON_RANGE = (80.05, 80.35)
+# Chennai zone data (subset for simulation)
+SIMULATION_ZONES = [
+    {"id": 1, "name": "Velachery",  "elevation_m": 3.5, "drainage_capacity_m3s": 30, "area_km2": 28, "population": 550000, "center_latitude": 12.9815, "center_longitude": 80.2180},
+    {"id": 2, "name": "Tambaram",   "elevation_m": 4.0, "drainage_capacity_m3s": 35, "area_km2": 42, "population": 420000, "center_latitude": 12.9249, "center_longitude": 80.1278},
+    {"id": 3, "name": "Adyar",      "elevation_m": 3.0, "drainage_capacity_m3s": 25, "area_km2": 20, "population": 380000, "center_latitude": 13.0012, "center_longitude": 80.2565},
+    {"id": 4, "name": "T. Nagar",   "elevation_m": 8.0, "drainage_capacity_m3s": 55, "area_km2": 15, "population": 530000, "center_latitude": 13.0418, "center_longitude": 80.2341},
+    {"id": 5, "name": "Mudichur",   "elevation_m": 3.0, "drainage_capacity_m3s": 20, "area_km2": 30, "population": 180000, "center_latitude": 12.9050, "center_longitude": 80.0680},
+    {"id": 6, "name": "Perungudi",  "elevation_m": 3.5, "drainage_capacity_m3s": 22, "area_km2": 18, "population": 280000, "center_latitude": 12.9630, "center_longitude": 80.2420},
+    {"id": 7, "name": "Anna Nagar", "elevation_m": 10.0, "drainage_capacity_m3s": 60, "area_km2": 22, "population": 465000, "center_latitude": 13.0850, "center_longitude": 80.2100},
+    {"id": 8, "name": "Egmore",     "elevation_m": 9.0, "drainage_capacity_m3s": 50, "area_km2": 10, "population": 310000, "center_latitude": 13.0732, "center_longitude": 80.2609},
+]
 
-# Chennai resource positions (from seed data)
-MOCK_RESOURCES = [
-    {"id": 1,  "latitude": 13.0604, "longitude": 80.2780, "resource_type": "ambulance"},
-    {"id": 2,  "latitude": 13.1145, "longitude": 80.2890, "resource_type": "ambulance"},
-    {"id": 3,  "latitude": 13.0843, "longitude": 80.2429, "resource_type": "ambulance"},
-    {"id": 4,  "latitude": 13.0067, "longitude": 80.2206, "resource_type": "ambulance"},
-    {"id": 5,  "latitude": 12.9850, "longitude": 80.2270, "resource_type": "ambulance"},
-    {"id": 6,  "latitude": 12.9550, "longitude": 80.1410, "resource_type": "ambulance"},
-    {"id": 7,  "latitude": 13.0032, "longitude": 80.2572, "resource_type": "ambulance"},
-    {"id": 8,  "latitude": 12.9100, "longitude": 80.2300, "resource_type": "ambulance"},
-    {"id": 9,  "latitude": 13.0860, "longitude": 80.2430, "resource_type": "fire_truck"},
-    {"id": 10, "latitude": 13.0400, "longitude": 80.2480, "resource_type": "fire_truck"},
-    {"id": 11, "latitude": 13.0340, "longitude": 80.2700, "resource_type": "fire_truck"},
-    {"id": 12, "latitude": 13.1250, "longitude": 80.2820, "resource_type": "fire_truck"},
-    {"id": 13, "latitude": 13.0606, "longitude": 80.2610, "resource_type": "police_unit"},
-    {"id": 14, "latitude": 13.0020, "longitude": 80.2560, "resource_type": "police_unit"},
-    {"id": 15, "latitude": 13.0870, "longitude": 80.2130, "resource_type": "police_unit"},
-    {"id": 16, "latitude": 13.0700, "longitude": 80.2500, "resource_type": "rescue_team"},
-    {"id": 17, "latitude": 12.9400, "longitude": 80.1350, "resource_type": "rescue_team"},
-    {"id": 18, "latitude": 13.1650, "longitude": 80.2630, "resource_type": "hazmat_unit"},
+SIMULATION_RESOURCES = [
+    {"id": 1, "name": "NDRF Boat Alpha", "resource_type": "rescue_boat", "latitude": 13.07, "longitude": 80.25, "can_operate_in_water": True, "max_water_depth_m": 999},
+    {"id": 2, "name": "SDRF Boat Tambaram", "resource_type": "rescue_boat", "latitude": 12.94, "longitude": 80.13, "can_operate_in_water": True, "max_water_depth_m": 999},
+    {"id": 3, "name": "Navy Boat Marina", "resource_type": "rescue_boat", "latitude": 13.05, "longitude": 80.28, "can_operate_in_water": True, "max_water_depth_m": 999},
+    {"id": 4, "name": "Fire Boat Velachery", "resource_type": "rescue_boat", "latitude": 12.98, "longitude": 80.22, "can_operate_in_water": True, "max_water_depth_m": 999},
+    {"id": 5, "name": "Raft Mudichur", "resource_type": "motorized_raft", "latitude": 12.905, "longitude": 80.07, "can_operate_in_water": True, "max_water_depth_m": 999},
+    {"id": 6, "name": "Ambulance Egmore", "resource_type": "ambulance", "latitude": 13.06, "longitude": 80.278, "can_operate_in_water": False, "max_water_depth_m": 0.4},
+    {"id": 7, "name": "Ambulance T. Nagar", "resource_type": "ambulance", "latitude": 13.006, "longitude": 80.22, "can_operate_in_water": False, "max_water_depth_m": 0.4},
+    {"id": 8, "name": "Relief Truck ANG", "resource_type": "relief_truck", "latitude": 13.086, "longitude": 80.213, "can_operate_in_water": False, "max_water_depth_m": 0.5},
+    {"id": 9, "name": "Pump Velachery", "resource_type": "pump_unit", "latitude": 12.983, "longitude": 80.219, "can_operate_in_water": False, "max_water_depth_m": 0.3},
+    {"id": 10, "name": "Rescue Team Egmore", "resource_type": "rescue_team", "latitude": 13.07, "longitude": 80.25, "can_operate_in_water": True, "max_water_depth_m": 1.5},
 ]
 
 
-def generate_synthetic_emergency() -> Dict[str, Any]:
-    """Generate a single synthetic emergency."""
-    etype = random.choice(EMERGENCY_TYPES)
-
-    # Time-based variation (rush hours more accidents)
-    hour = random.randint(0, 23)
-    day_of_week = random.randint(0, 6)
-
-    # Weighted injury levels by type
-    injury_weights = {
-        "medical": (5, 4), "fire": (4, 3), "accident": (6, 3),
-        "flood": (3, 3), "crime": (3, 4), "other": (2, 2)
-    }
-    mean_inj, std_inj = injury_weights[etype]
-
-    return {
-        "emergency_type": etype,
-        "latitude": random.uniform(*LAT_RANGE),
-        "longitude": random.uniform(*LON_RANGE),
-        "injury_level": min(10, max(0, int(np.random.normal(mean_inj, std_inj)))),
-        "people_affected": max(1, int(np.random.exponential(3))),
-        "hazard_level": random.randint(0, 10),
-        "hour_of_day": hour,
-        "day_of_week": day_of_week,
-    }
-
-
-def run_ml_prediction(emergency: Dict) -> Dict:
-    """Run ML prediction on a single emergency."""
-    start = time.perf_counter()
-    result = ml_service.predict(
-        emergency_type=emergency["emergency_type"],
-        injury_level=emergency["injury_level"],
-        people_affected=emergency["people_affected"],
-        hazard_level=emergency["hazard_level"],
-        hour_of_day=emergency["hour_of_day"],
-        day_of_week=emergency["day_of_week"],
-    )
-    elapsed_ms = (time.perf_counter() - start) * 1000
-    return {**result, "prediction_time_ms": elapsed_ms}
-
-
-def run_routing(emergency: Dict, resources: List[Dict]) -> Dict:
-    """Run routing to find optimal resource."""
-    start = time.perf_counter()
-    route = routing_service.find_optimal_resource(
-        emergency_lat=emergency["latitude"],
-        emergency_lon=emergency["longitude"],
-        emergency_type=emergency["emergency_type"],
-        severity=emergency.get("severity", "medium"),
-        available_resources=resources,
-        algorithm="dijkstra",
-    )
-    elapsed_ms = (time.perf_counter() - start) * 1000
-
-    if route:
-        return {
-            "resource_id": route.resource_id,
-            "resource_type": route.resource_type,
-            "distance_km": route.distance_km,
-            "estimated_time_min": route.estimated_time_min,
-            "routing_time_ms": elapsed_ms,
-        }
-    return {"routing_time_ms": elapsed_ms, "resource_id": None}
-
-
-def compute_metrics(results: List[Dict]) -> Dict[str, Any]:
-    """Compute performance metrics from simulation results."""
-    ml_times = [r["ml"]["prediction_time_ms"] for r in results if "ml" in r]
-    routing_times = [r["routing"]["routing_time_ms"] for r in results if "routing" in r]
-    response_times = [r["routing"]["estimated_time_min"] for r in results
-                      if "routing" in r and r["routing"].get("estimated_time_min")]
-    dispatched = sum(1 for r in results if r["routing"].get("resource_id"))
-
-    severity_dist = {}
-    for r in results:
-        sev = r["ml"]["severity"]
-        severity_dist[sev] = severity_dist.get(sev, 0) + 1
-
-    type_dist = {}
-    for r in results:
-        t = r["emergency_type"]
-        type_dist[t] = type_dist.get(t, 0) + 1
-
-    return {
-        "total_emergencies": len(results),
-        "successful_dispatches": dispatched,
-        "dispatch_rate_pct": round(dispatched / len(results) * 100, 2),
-        "ml_prediction": {
-            "avg_ms": round(np.mean(ml_times), 2),
-            "p95_ms": round(np.percentile(ml_times, 95), 2),
-            "max_ms": round(max(ml_times), 2),
-            "under_200ms_pct": round(sum(1 for t in ml_times if t < 200) / len(ml_times) * 100, 2),
-        },
-        "routing": {
-            "avg_ms": round(np.mean(routing_times), 2),
-            "p95_ms": round(np.percentile(routing_times, 95), 2),
-            "max_ms": round(max(routing_times), 2),
-            "under_300ms_pct": round(sum(1 for t in routing_times if t < 300) / len(routing_times) * 100, 2),
-        },
-        "response_times_min": {
-            "avg": round(np.mean(response_times), 2),
-            "min": round(min(response_times), 2),
-            "max": round(max(response_times), 2),
-            "p50": round(np.percentile(response_times, 50), 2),
-            "p95": round(np.percentile(response_times, 95), 2),
-        },
-        "severity_distribution": severity_dist,
-        "emergency_type_distribution": type_dist,
-    }
-
-
-def print_report(metrics: Dict):
-    """Pretty-print simulation report."""
-    print("\n" + "=" * 65)
-    print("  AEIRAS SIMULATION REPORT — CHENNAI")
-    print("=" * 65)
-    print(f"  Total Emergencies   : {metrics['total_emergencies']}")
-    print(f"  Successful Dispatches: {metrics['successful_dispatches']}")
-    print(f"  Dispatch Rate        : {metrics['dispatch_rate_pct']}%")
-    print()
-    print("  ML PREDICTION PERFORMANCE")
-    ml = metrics["ml_prediction"]
-    print(f"    Avg Time           : {ml['avg_ms']} ms")
-    print(f"    P95 Time           : {ml['p95_ms']} ms")
-    print(f"    Under 200ms        : {ml['under_200ms_pct']}%")
-    print()
-    print("  ROUTING PERFORMANCE")
-    rt = metrics["routing"]
-    print(f"    Avg Time           : {rt['avg_ms']} ms")
-    print(f"    P95 Time           : {rt['p95_ms']} ms")
-    print(f"    Under 300ms        : {rt['under_300ms_pct']}%")
-    print()
-    print("  ESTIMATED RESPONSE TIMES")
-    resp = metrics["response_times_min"]
-    print(f"    Avg Response       : {resp['avg']} min")
-    print(f"    P50 Response       : {resp['p50']} min")
-    print(f"    P95 Response       : {resp['p95']} min")
-    print()
-    print("  SEVERITY DISTRIBUTION")
-    for sev, cnt in sorted(metrics["severity_distribution"].items()):
-        pct = round(cnt / metrics["total_emergencies"] * 100, 1)
-        print(f"    {sev.upper():<12}: {cnt:>5} ({pct}%)")
-    print("=" * 65)
-
-
-def run_simulation(n: int = 1000, output_path: str = None) -> Dict:
-    """Run the full simulation."""
-    logger.info(f"Starting Chennai simulation with {n} emergencies...")
-
-    results = []
-    start_total = time.perf_counter()
-
+def generate_flood_incidents(zones: list, n: int) -> list:
+    """Generate synthetic flood incidents across zones."""
+    incidents = []
     for i in range(n):
-        emergency = generate_synthetic_emergency()
+        zone = random.choice(zones)
+        water_level = round(random.uniform(0.3, 4.0), 2)
+        severity = "low" if water_level < 0.8 else "moderate" if water_level < 1.5 else "severe" if water_level < 2.5 else "catastrophic"
 
-        # ML Prediction
-        ml_result = run_ml_prediction(emergency)
-        emergency["severity"] = ml_result["severity"]
-
-        # Routing
-        # Use all resources as "available" for simulation
-        available = random.sample(MOCK_RESOURCES, k=min(10, len(MOCK_RESOURCES)))
-        routing_result = run_routing(emergency, available)
-
-        results.append({
+        incidents.append({
             "id": i + 1,
-            "emergency_type": emergency["emergency_type"],
-            "ml": ml_result,
-            "routing": routing_result,
+            "latitude": zone["center_latitude"] + random.uniform(-0.01, 0.01),
+            "longitude": zone["center_longitude"] + random.uniform(-0.01, 0.01),
+            "water_level_m": water_level,
+            "predicted_severity": severity,
+            "people_stranded": random.randint(0, 30),
+            "zone_name": zone["name"],
         })
+    return incidents
 
-        if (i + 1) % 100 == 0:
-            logger.info(f"Processed {i + 1}/{n} emergencies...")
 
-    total_time = time.perf_counter() - start_total
-    metrics = compute_metrics(results)
-    metrics["total_simulation_time_sec"] = round(total_time, 2)
-    metrics["avg_throughput_per_sec"] = round(n / total_time, 1)
-    metrics["generated_at"] = datetime.utcnow().isoformat()
-    metrics["city"] = "Chennai"
+def run_simulation(scenario: str = "moderate_monsoon", n_incidents: int = 500):
+    """Run complete flood scenario simulation."""
+    print("=" * 70)
+    print("  AERIS — Urban Flood Response Simulator (Chennai)")
+    print("=" * 70)
+    print(f"  Scenario: {scenario}")
+    print(f"  Zones: {len(SIMULATION_ZONES)}")
+    print(f"  Resources: {len(SIMULATION_RESOURCES)}")
+    print(f"  Incidents to simulate: {n_incidents}")
+    print("=" * 70)
 
-    print_report(metrics)
+    # 1. Flood Simulation
+    print("\n[1/5] Running flood spread simulation...")
+    flood_sim = FloodSimulationService()
+    flood_sim.initialize_zones(SIMULATION_ZONES)
+    sim_result = flood_sim.run_full_simulation(scenario=scenario, duration_hours=6)
 
-    if output_path:
-        with open(output_path, "w") as f:
-            json.dump(metrics, f, indent=2)
-        logger.info(f"Results saved to {output_path}")
+    print(f"  Peak rainfall: {sim_result['peak_rainfall_mmph']:.1f} mm/hr")
+    print(f"  Zones flooded (>0.3m): {sim_result['zones_flooded']} / {sim_result['total_zones']}")
+    print(f"  Roads blocked: {sim_result['roads_blocked']}")
+    print(f"  Final water levels:")
+    for wl in sim_result["final_water_levels"]:
+        bar = "█" * int(wl["water_level_m"] * 10)
+        print(f"    {wl['zone_name']:15s}: {wl['water_level_m']:.2f}m {bar}")
 
-    return metrics
+    # 2. Flood Prediction
+    print("\n[2/5] Running ML flood severity predictions...")
+    ml = FloodMLService.get_instance()
+    incidents = generate_flood_incidents(SIMULATION_ZONES, n_incidents)
+    predictions = {"low": 0, "moderate": 0, "severe": 0, "catastrophic": 0}
+
+    for inc in incidents:
+        try:
+            pred = ml.predict(
+                rainfall_intensity_mmph=random.uniform(20, 120),
+                cumulative_rainfall_24h_mm=random.uniform(100, 400),
+                elevation_m=random.choice([3, 4, 5, 8, 10, 12]),
+                drainage_capacity_ratio=random.uniform(0.1, 0.8),
+                current_water_level_m=inc["water_level_m"],
+            )
+            inc["predicted_severity"] = pred["severity"]
+            predictions[pred["severity"]] += 1
+        except Exception:
+            pass
+
+    print(f"  Predictions: {dict(predictions)}")
+
+    # 3. Flood-Aware Routing
+    print("\n[3/5] Computing flood-aware routes...")
+    routing = FloodRoutingService()
+    flood_data = flood_sim.get_flood_data_for_routing()
+    routing.update_flood_conditions(flood_data)
+
+    routing_times = []
+    for inc in incidents[:50]:
+        res = random.choice(SIMULATION_RESOURCES)
+        _, travel_time, _, penalty = routing.compute_travel_time(
+            res["latitude"], res["longitude"],
+            inc["latitude"], inc["longitude"],
+            vehicle_type=res["resource_type"],
+        )
+        routing_times.append(travel_time)
+
+    print(f"  Sample routing (50 incidents):")
+    print(f"    Avg travel time: {np.mean(routing_times):.1f} min")
+    print(f"    P95 travel time: {np.percentile(routing_times, 95):.1f} min")
+
+    # 4. Optimal vs Greedy Allocation
+    print("\n[4/5] Comparing allocation strategies...")
+    allocator = ResourceAllocationService()
+    test_incidents = incidents[:min(len(SIMULATION_RESOURCES), 10)]
+
+    # Optimal (Hungarian)
+    optimal = allocator.compute_allocation(test_incidents, SIMULATION_RESOURCES)
+
+    # Greedy (nearest first)
+    import copy
+    greedy_cost = np.full((len(SIMULATION_RESOURCES), len(test_incidents)), 1e6)
+    for r_idx, res in enumerate(SIMULATION_RESOURCES):
+        for i_idx, inc in enumerate(test_incidents):
+            _, t, _, _ = routing.compute_travel_time(
+                res["latitude"], res["longitude"],
+                inc["latitude"], inc["longitude"],
+                vehicle_type=res["resource_type"],
+            )
+            greedy_cost[r_idx][i_idx] = t
+    greedy = allocator._greedy_allocation(test_incidents, SIMULATION_RESOURCES, greedy_cost)
+
+    print(f"  OPTIMAL (Hungarian):")
+    print(f"    Assignments: {len(optimal['assignments'])}")
+    print(f"    Total response time: {optimal['total_response_time_min']:.1f} min")
+    print(f"    Avg response time: {optimal['avg_response_time_min']:.1f} min")
+    print(f"  GREEDY (nearest-first):")
+    print(f"    Assignments: {len(greedy['assignments'])}")
+    print(f"    Total response time: {greedy['total_response_time_min']:.1f} min")
+    print(f"    Avg response time: {greedy['avg_response_time_min']:.1f} min")
+
+    improvement = 0
+    if greedy["avg_response_time_min"] > 0 and optimal["avg_response_time_min"] > 0:
+        improvement = (1 - optimal["avg_response_time_min"] / greedy["avg_response_time_min"]) * 100
+
+    print(f"\n  📈 IMPROVEMENT: {improvement:.1f}% reduction in avg response time with optimal allocation")
+
+    # 5. Summary
+    print("\n[5/5] Complete.")
+    print("=" * 70)
+    print("  SIMULATION SUMMARY")
+    print(f"  Scenario: {scenario}")
+    print(f"  Incidents generated: {n_incidents}")
+    print(f"  Zones flooded: {sim_result['zones_flooded']}")
+    print(f"  Roads blocked: {sim_result['roads_blocked']}")
+    print(f"  Severity distribution: {dict(predictions)}")
+    print(f"  Optimal vs Greedy improvement: {improvement:.1f}%")
+    print("=" * 70)
+
+    return {
+        "simulation": sim_result,
+        "predictions": predictions,
+        "routing": {"avg_time": np.mean(routing_times), "p95_time": np.percentile(routing_times, 95)},
+        "optimal_allocation": optimal,
+        "greedy_allocation": greedy,
+        "improvement_pct": improvement,
+    }
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="AEIRAS Chennai Simulation Engine")
-    parser.add_argument("--n", type=int, default=1000, help="Number of emergencies")
-    parser.add_argument("--output", type=str, default="simulation_results.json")
+    import argparse
+    parser = argparse.ArgumentParser(description="AERIS Flood Response Simulator")
+    parser.add_argument("--scenario", default="moderate_monsoon", choices=["light_rain", "moderate_monsoon", "heavy_monsoon", "chennai_2015", "coastal_surge"])
+    parser.add_argument("--n", type=int, default=500, help="Number of incidents")
     args = parser.parse_args()
 
-    run_simulation(n=args.n, output_path=args.output)
+    result = run_simulation(scenario=args.scenario, n_incidents=args.n)

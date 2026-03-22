@@ -1,4 +1,9 @@
-from pydantic import BaseModel, Field, EmailStr, validator
+"""
+Pydantic Schemas — Urban Flood Disaster Response Optimization System
+All schemas are flood-specific. No generic emergency types remain.
+"""
+
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
@@ -6,36 +11,43 @@ from enum import Enum
 
 # ==================== ENUMS ====================
 
-class EmergencyTypeEnum(str, Enum):
-    medical = "medical"
-    fire = "fire"
-    accident = "accident"
-    flood = "flood"
-    crime = "crime"
-    other = "other"
+class FloodTypeEnum(str, Enum):
+    riverine = "riverine"
+    pluvial = "pluvial"
+    coastal = "coastal"
+    storm_surge = "storm_surge"
 
 
-class SeverityEnum(str, Enum):
+class FloodSeverityEnum(str, Enum):
     low = "low"
-    medium = "medium"
-    high = "high"
-    critical = "critical"
+    moderate = "moderate"
+    severe = "severe"
+    catastrophic = "catastrophic"
 
 
-class EmergencyStatusEnum(str, Enum):
+class DrainageStatusEnum(str, Enum):
+    functional = "functional"
+    partial = "partial"
+    overwhelmed = "overwhelmed"
+    collapsed = "collapsed"
+
+
+class IncidentStatusEnum(str, Enum):
     pending = "pending"
     dispatched = "dispatched"
     in_progress = "in_progress"
+    evacuating = "evacuating"
     resolved = "resolved"
     cancelled = "cancelled"
 
 
 class ResourceTypeEnum(str, Enum):
+    rescue_boat = "rescue_boat"
+    motorized_raft = "motorized_raft"
     ambulance = "ambulance"
-    fire_truck = "fire_truck"
-    police_unit = "police_unit"
+    relief_truck = "relief_truck"
+    pump_unit = "pump_unit"
     rescue_team = "rescue_team"
-    hazmat_unit = "hazmat_unit"
 
 
 class ResourceStatusEnum(str, Enum):
@@ -49,6 +61,19 @@ class UserRoleEnum(str, Enum):
     admin = "admin"
     dispatcher = "dispatcher"
     viewer = "viewer"
+
+
+class WaterLevelSourceEnum(str, Enum):
+    sensor = "sensor"
+    satellite = "satellite"
+    crowd_report = "crowd_report"
+    model = "model"
+
+
+class DispatchTypeEnum(str, Enum):
+    rescue = "rescue"
+    evacuate = "evacuate"
+    relief = "relief"
 
 
 # ==================== AUTH SCHEMAS ====================
@@ -86,16 +111,20 @@ class Token(BaseModel):
     expires_in: int
 
 
-# ==================== EMERGENCY SCHEMAS ====================
+# ==================== FLOOD INCIDENT SCHEMAS ====================
 
-class EmergencyCreate(BaseModel):
-    emergency_type: EmergencyTypeEnum
+class FloodIncidentCreate(BaseModel):
     latitude: float = Field(..., ge=-90, le=90)
     longitude: float = Field(..., ge=-180, le=180)
     address: Optional[str] = None
-    injury_level: int = Field(default=0, ge=0, le=10)
-    people_affected: int = Field(default=1, ge=1, le=10000)
-    hazard_level: int = Field(default=0, ge=0, le=10)
+    flood_type: FloodTypeEnum = FloodTypeEnum.pluvial
+    water_level_m: float = Field(default=0.0, ge=0.0)
+    rainfall_intensity_mmph: float = Field(default=0.0, ge=0.0)
+    drainage_status: DrainageStatusEnum = DrainageStatusEnum.functional
+    people_stranded: int = Field(default=0, ge=0)
+    people_affected: int = Field(default=1, ge=1)
+    structures_affected: int = Field(default=0, ge=0)
+    is_road_blocked: bool = False
     description: Optional[str] = Field(None, max_length=1000)
     reporter_name: Optional[str] = None
     reporter_phone: Optional[str] = None
@@ -103,79 +132,84 @@ class EmergencyCreate(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "emergency_type": "medical",
-                "latitude": 28.6139,
-                "longitude": 77.2090,
-                "address": "Connaught Place, New Delhi",
-                "injury_level": 7,
-                "people_affected": 3,
-                "hazard_level": 2,
-                "description": "Road accident with multiple injuries",
-                "reporter_name": "Amit Kumar",
+                "latitude": 13.0418,
+                "longitude": 80.2341,
+                "address": "T. Nagar, Chennai",
+                "flood_type": "pluvial",
+                "water_level_m": 1.2,
+                "rainfall_intensity_mmph": 45.0,
+                "drainage_status": "overwhelmed",
+                "people_stranded": 15,
+                "people_affected": 50,
+                "structures_affected": 8,
+                "is_road_blocked": True,
+                "description": "Heavy waterlogging in T. Nagar. Multiple families stranded on rooftops.",
+                "reporter_name": "Ravi Kumar",
                 "reporter_phone": "+91-9876543210"
             }
         }
 
 
-class CrowdSourcedReport(BaseModel):
-    """Optional crowd-sourced incident input schema."""
-    emergency_type: EmergencyTypeEnum
+class CrowdFloodReport(BaseModel):
     latitude: float = Field(..., ge=-90, le=90)
     longitude: float = Field(..., ge=-180, le=180)
+    water_level_m: float = Field(default=0.0, ge=0.0)
+    is_road_blocked: bool = False
     description: str = Field(..., min_length=10, max_length=500)
     reporter_name: Optional[str] = None
     reporter_phone: Optional[str] = None
     photo_url: Optional[str] = None
-    people_affected: int = Field(default=1, ge=1)
 
 
-class SHAPValue(BaseModel):
-    emergency_type_encoded: float = 0.0
-    injury_level: float = 0.0
-    people_affected: float = 0.0
-    hazard_level: float = 0.0
-    hour_of_day: float = 0.0
-    day_of_week: float = 0.0
-    is_weekend: float = 0.0
-
-
-class MLPredictionResult(BaseModel):
-    severity: SeverityEnum
+class MLFloodPrediction(BaseModel):
+    severity: FloodSeverityEnum
     confidence: float
+    inundation_risk_score: float
+    predicted_water_level_1h: float
+    predicted_water_level_6h: float
+    risk_hotspot_score: float
     class_probabilities: Dict[str, float]
     shap_values: Dict[str, float]
     feature_importance: Dict[str, float]
 
 
-class EmergencyResponse(BaseModel):
+class FloodIncidentResponse(BaseModel):
     id: int
-    emergency_type: str
     latitude: float
     longitude: float
     address: Optional[str]
-    injury_level: int
-    people_affected: int
-    hazard_level: int
+    zone_id: Optional[int]
+    flood_type: Optional[str]
+    water_level_m: Optional[float]
+    rainfall_intensity_mmph: Optional[float]
+    drainage_status: Optional[str]
+    people_stranded: Optional[int]
+    people_affected: Optional[int]
+    structures_affected: Optional[int]
+    is_road_blocked: Optional[bool]
     description: Optional[str]
     predicted_severity: Optional[str]
     severity_confidence: Optional[float]
+    inundation_risk_score: Optional[float]
+    predicted_water_level_1h: Optional[float]
+    predicted_water_level_6h: Optional[float]
+    risk_hotspot_score: Optional[float]
     shap_values: Optional[Dict[str, float]]
     status: str
     reporter_name: Optional[str]
     reporter_phone: Optional[str]
-    is_crowd_sourced: int
-    zone_id: Optional[int]
+    is_crowd_sourced: Optional[bool]
     reported_at: Optional[datetime]
     dispatched_at: Optional[datetime]
     resolved_at: Optional[datetime]
-    ml_prediction: Optional[MLPredictionResult] = None
+    ml_prediction: Optional[MLFloodPrediction] = None
 
     class Config:
         from_attributes = True
 
 
-class EmergencyListResponse(BaseModel):
-    items: List[EmergencyResponse]
+class FloodIncidentListResponse(BaseModel):
+    items: List[FloodIncidentResponse]
     total: int
     page: int
     page_size: int
@@ -191,14 +225,18 @@ class ResourceCreate(BaseModel):
     base_station: Optional[str] = None
     capacity: int = Field(default=1, ge=1)
     crew_count: int = Field(default=2, ge=1)
+    passenger_capacity: int = Field(default=6, ge=1)
     vehicle_id: Optional[str] = None
     zone_id: Optional[int] = None
+    can_operate_in_water: bool = False
+    max_water_depth_m: float = Field(default=0.5, ge=0.0)
 
 
 class ResourceUpdate(BaseModel):
     status: Optional[ResourceStatusEnum] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    fuel_hours_remaining: Optional[float] = None
 
 
 class ResourceResponse(BaseModel):
@@ -211,8 +249,12 @@ class ResourceResponse(BaseModel):
     base_station: Optional[str]
     capacity: int
     crew_count: int
+    passenger_capacity: Optional[int]
     vehicle_id: Optional[str]
-    current_emergency_id: Optional[int]
+    can_operate_in_water: Optional[bool]
+    max_water_depth_m: Optional[float]
+    fuel_hours_remaining: Optional[float]
+    current_incident_id: Optional[int]
     zone_id: Optional[int]
     is_active: bool
     created_at: Optional[datetime]
@@ -224,32 +266,39 @@ class ResourceResponse(BaseModel):
 # ==================== DISPATCH SCHEMAS ====================
 
 class DispatchRequest(BaseModel):
-    emergency_id: int
-    algorithm: str = Field(default="dijkstra", pattern="^(dijkstra|astar)$")
+    incident_id: int
+    algorithm: str = Field(default="flood_dijkstra", pattern="^(flood_dijkstra|flood_astar)$")
     manual_resource_id: Optional[int] = None
+    dispatch_type: DispatchTypeEnum = DispatchTypeEnum.rescue
+    shelter_id: Optional[int] = None
 
 
 class DispatchResponse(BaseModel):
     success: bool
-    emergency_id: int
+    incident_id: int
     severity: Optional[str]
     confidence: Optional[float]
     resource: Optional[Dict[str, Any]]
     route: Optional[Dict[str, Any]]
     dispatch_log_id: Optional[int]
+    shelter: Optional[Dict[str, Any]] = None
     message: Optional[str]
 
 
 class DispatchLogResponse(BaseModel):
     id: int
-    emergency_id: int
+    incident_id: int
     resource_id: int
     dispatcher_id: Optional[int]
     route_distance_km: Optional[float]
     estimated_travel_time_min: Optional[float]
     actual_travel_time_min: Optional[float]
     routing_algorithm: Optional[str]
+    water_depth_at_scene_m: Optional[float]
+    route_flood_penalty: Optional[float]
+    shelter_id: Optional[int]
     dispatch_status: str
+    dispatch_type: Optional[str]
     dispatched_at: Optional[datetime]
     arrived_at: Optional[datetime]
     completed_at: Optional[datetime]
@@ -258,42 +307,156 @@ class DispatchLogResponse(BaseModel):
         from_attributes = True
 
 
+# ==================== SHELTER SCHEMAS ====================
+
+class ShelterResponse(BaseModel):
+    id: int
+    name: str
+    latitude: float
+    longitude: float
+    address: Optional[str]
+    zone_id: Optional[int]
+    total_capacity: int
+    current_occupancy: int
+    occupancy_pct: Optional[float] = None
+    has_medical_facility: bool
+    has_food_supply: bool
+    has_water_supply: bool
+    has_power_backup: bool
+    elevation_m: Optional[float]
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+
+class ShelterOccupancyUpdate(BaseModel):
+    current_occupancy: int = Field(..., ge=0)
+
+
+# ==================== FLOOD ZONE SCHEMAS ====================
+
+class FloodZoneResponse(BaseModel):
+    id: int
+    name: str
+    code: str
+    center_latitude: float
+    center_longitude: float
+    area_km2: Optional[float]
+    elevation_m: Optional[float]
+    drainage_capacity_m3s: Optional[float]
+    flood_risk_score: Optional[float]
+    current_water_level_m: Optional[float]
+    max_recorded_water_level_m: Optional[float]
+    population: Optional[int]
+    population_density: Optional[float]
+    total_resources: Optional[int]
+    shelter_capacity: Optional[int]
+    underserved_score: Optional[float]
+    equity_score: Optional[float]
+
+    class Config:
+        from_attributes = True
+
+
+# ==================== WATER LEVEL SCHEMAS ====================
+
+class WaterLevelReading(BaseModel):
+    zone_id: int
+    water_level_m: float
+    rate_of_rise_m_per_hr: float = 0.0
+    rainfall_intensity_mmph: float = 0.0
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    source: WaterLevelSourceEnum = WaterLevelSourceEnum.model
+
+
+class WaterLevelResponse(BaseModel):
+    id: int
+    zone_id: int
+    water_level_m: float
+    rate_of_rise_m_per_hr: Optional[float]
+    rainfall_intensity_mmph: Optional[float]
+    source: Optional[str]
+    recorded_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+
+# ==================== ROAD BLOCK SCHEMAS ====================
+
+class RoadBlockResponse(BaseModel):
+    id: int
+    road_segment_id: Optional[str]
+    road_name: Optional[str]
+    from_lat: float
+    from_lon: float
+    to_lat: float
+    to_lon: float
+    water_depth_m: float
+    is_passable: bool
+    passable_by: Optional[list]
+    zone_id: Optional[int]
+    blocked_since: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+
+# ==================== SIMULATION SCHEMAS ====================
+
+class FloodSimulationRequest(BaseModel):
+    rainfall_intensity_mmph: float = Field(default=40.0, ge=0.0)
+    duration_hours: int = Field(default=6, ge=1, le=48)
+    scenario: str = Field(default="moderate_monsoon")
+
+
+class FloodSimulationStatus(BaseModel):
+    is_running: bool
+    current_hour: int
+    total_hours: int
+    zones_flooded: int
+    roads_blocked: int
+    incidents_generated: int
+    water_levels: List[Dict[str, Any]]
+
+
 # ==================== ANALYTICS SCHEMAS ====================
 
-class HeatmapPoint(BaseModel):
-    id: int
+class FloodHeatmapPoint(BaseModel):
+    zone_id: int
+    zone_name: str
     lat: float
     lon: float
-    intensity: float
-    type: str
+    water_level_m: float
+    flood_risk_score: float
     severity: str
-    status: str
-    people_affected: Optional[int]
-    reported_at: Optional[str]
+    population: Optional[int]
 
 
-class ZoneMetric(BaseModel):
-    zone_id: Optional[int]
+class ZoneRiskMetric(BaseModel):
+    zone_id: int
     zone_name: str
-    zone_code: str
+    code: str
     center_lat: float
     center_lon: float
+    flood_risk_score: float
+    current_water_level_m: float
+    elevation_m: float
+    drainage_capacity_m3s: float
     avg_response_time_min: float
     total_dispatches: int
     total_resources: int
-    equity_score: float
+    shelter_capacity: int
+    population: int
     underserved_score: float
-    risk_level: str
     is_underserved: bool
 
 
-class EquityResponse(BaseModel):
-    zone_metrics: List[ZoneMetric]
-    summary: Dict[str, Any]
-    underserved_zones: List[ZoneMetric]
-
-
 class DashboardStats(BaseModel):
-    emergencies: Dict[str, Any]
+    flood_incidents: Dict[str, Any]
     resources: Dict[str, Any]
+    shelters: Dict[str, Any]
     performance: Dict[str, Any]
+    water_levels: Dict[str, Any]

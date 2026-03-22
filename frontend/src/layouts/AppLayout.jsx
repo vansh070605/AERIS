@@ -2,20 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, Navigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard, Map, Truck, Radio, BarChart3,
-    AlertTriangle, Shield, Wifi, WifiOff, Bell, LogOut,
-    ChevronRight, Activity, Zap, Sparkles
+    Droplets, Shield, Wifi, WifiOff, Bell, LogOut,
+    ChevronRight, Activity, Waves, CloudRain
 } from 'lucide-react';
 import { useAuthStore, useUIStore, useEmergencyStore } from '../store';
 import { useWebSocket } from '../hooks/useWebSocket';
 
 const NAV_ITEMS = [
-    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', accent: '#00d4ff' },
-    { to: '/map', icon: Map, label: 'Live Map', accent: '#4f8ef0' },
-    { to: '/emergencies', icon: AlertTriangle, label: 'Emergencies', accent: '#ff4060' },
-    { to: '/resources', icon: Truck, label: 'Resources', accent: '#00e5a0' },
-    { to: '/dispatch', icon: Radio, label: 'Dispatch', accent: '#ffc947' },
-    { to: '/analytics', icon: BarChart3, label: 'Analytics', accent: '#a78bfa' },
-    { to: '/demo', icon: Sparkles, label: 'How It Works', accent: '#ffc947' },
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Flood Dashboard', accent: '#00d4ff' },
+    { to: '/map', icon: Map, label: 'Flood Map', accent: '#4f8ef0' },
+    { to: '/emergencies', icon: Droplets, label: 'Flood Incidents', accent: '#ff4060' },
+    { to: '/resources', icon: Truck, label: 'Rescue Resources', accent: '#00e5a0' },
+    { to: '/dispatch', icon: Radio, label: 'Dispatch Center', accent: '#ffc947' },
+    { to: '/analytics', icon: BarChart3, label: 'Flood Analytics', accent: '#a78bfa' },
+    { to: '/demo', icon: CloudRain, label: 'Flood Simulator', accent: '#38bdf8' },
 ];
 
 const ROLE_COLORS = {
@@ -48,7 +48,7 @@ export default function AppLayout() {
 
     const unread = notifications.filter(n => !n.read).length;
     const roleMeta = ROLE_COLORS[user?.role] || ROLE_COLORS.viewer;
-    const currentPage = NAV_ITEMS.find(n => location.pathname.startsWith(n.to))?.label || 'AEIRAS';
+    const currentPage = NAV_ITEMS.find(n => location.pathname.startsWith(n.to))?.label || 'AERIS Flood';
 
     return (
         <div style={{ display: 'flex', height: '100vh', background: 'var(--bg)', overflow: 'hidden', position: 'relative' }}>
@@ -68,19 +68,19 @@ export default function AppLayout() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{
                             width: 36, height: 36, borderRadius: 10,
-                            background: 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(79,142,240,0.15))',
-                            border: '1px solid rgba(0,212,255,0.3)',
+                            background: 'linear-gradient(135deg, rgba(56,189,248,0.25), rgba(79,142,240,0.15))',
+                            border: '1px solid rgba(56,189,248,0.35)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: '0 0 16px rgba(0,212,255,0.15)',
+                            boxShadow: '0 0 16px rgba(56,189,248,0.2)',
                         }}>
-                            <Shield size={16} style={{ color: 'var(--cyan)' }} />
+                            <Waves size={16} style={{ color: '#38bdf8' }} />
                         </div>
                         <div>
                             <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--text1)', letterSpacing: '-0.02em' }}>
-                                AEIRAS
+                                AERIS Flood
                             </div>
                             <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.08em', fontWeight: 600, textTransform: 'uppercase' }}>
-                                Emergency AI
+                                Chennai Response
                             </div>
                         </div>
                     </div>
@@ -109,7 +109,7 @@ export default function AppLayout() {
 
                 {/* Section: Main */}
                 <div style={{ padding: '12px 12px 4px' }}>
-                    <div className="section-label" style={{ paddingLeft: 4, marginBottom: 6 }}>Navigation</div>
+                    <div className="section-label" style={{ paddingLeft: 4, marginBottom: 6 }}>Flood Operations</div>
                 </div>
 
                 {/* Nav Links */}
@@ -135,10 +135,10 @@ export default function AppLayout() {
                 </nav>
 
                 {/* System status */}
-                <div style={{ margin: '8px 12px', padding: '10px 12px', borderRadius: 10, background: 'rgba(0,229,160,0.06)', border: '1px solid rgba(0,229,160,0.15)' }}>
+                <div style={{ margin: '8px 12px', padding: '10px 12px', borderRadius: 10, background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.15)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Activity size={11} style={{ color: 'var(--green)' }} />
-                        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--green)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>System Operational</span>
+                        <Activity size={11} style={{ color: '#38bdf8' }} />
+                        <span style={{ fontSize: 10, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Flood Response Active</span>
                     </div>
                 </div>
 
@@ -192,7 +192,8 @@ export default function AppLayout() {
                 }}>
                     {/* Breadcrumb */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
-                        <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>AEIRAS</span>
+                        <Waves size={13} style={{ color: '#38bdf8' }} />
+                        <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>AERIS Flood</span>
                         <ChevronRight size={12} style={{ color: 'var(--text3)' }} />
                         <span style={{ fontSize: 12, color: 'var(--text1)', fontWeight: 600 }}>{currentPage}</span>
                     </div>
@@ -204,8 +205,8 @@ export default function AppLayout() {
                             background: 'rgba(255,64,96,0.1)', border: '1px solid rgba(255,64,96,0.25)',
                             borderRadius: 99, padding: '4px 12px',
                         }}>
-                            <Zap size={11} style={{ color: 'var(--red)' }} className="animate-pulse-slow" />
-                            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--red)' }} className="mono">{liveCount} active</span>
+                            <Droplets size={11} style={{ color: 'var(--red)' }} className="animate-pulse-slow" />
+                            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--red)' }} className="mono">{liveCount} active floods</span>
                         </div>
                     )}
 
@@ -256,13 +257,13 @@ function NotificationToasts() {
                     style={{
                         minWidth: 280, maxWidth: 340, borderRadius: 12, padding: '12px 16px',
                         pointerEvents: 'auto',
-                        border: n.severity === 'critical' ? '1px solid rgba(255,64,96,0.35)' : '1px solid rgba(0,212,255,0.25)',
-                        background: n.severity === 'critical' ? 'rgba(255,64,96,0.08)' : 'rgba(0,212,255,0.06)',
-                        boxShadow: n.severity === 'critical' ? 'var(--red-glow)' : 'var(--cyan-glow)',
+                        border: n.severity === 'critical' ? '1px solid rgba(255,64,96,0.35)' : '1px solid rgba(56,189,248,0.25)',
+                        background: n.severity === 'critical' ? 'rgba(255,64,96,0.08)' : 'rgba(56,189,248,0.06)',
+                        boxShadow: n.severity === 'critical' ? 'var(--red-glow)' : '0 0 20px rgba(56,189,248,0.15)',
                     }}
                 >
                     <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                        <AlertTriangle size={15} style={{ color: n.severity === 'critical' ? 'var(--red)' : 'var(--cyan)', flexShrink: 0, marginTop: 1 }} />
+                        <Droplets size={15} style={{ color: n.severity === 'critical' ? 'var(--red)' : '#38bdf8', flexShrink: 0, marginTop: 1 }} />
                         <p style={{ fontSize: 12, color: 'var(--text1)', flex: 1, lineHeight: 1.5 }}>{n.message}</p>
                         <button onClick={() => clearNotification(n.id)}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', fontSize: 14, padding: 0, lineHeight: 1 }}>

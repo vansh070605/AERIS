@@ -1,132 +1,120 @@
 """
-Resource API Routes — SQLite compatible.
+Flood Resource Management API Routes
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from datetime import datetime
-import logging
+from sqlalchemy import select, update, func
 
 from app.database import get_db
 from app.models.resource import Resource
-from app.schemas import ResourceCreate, ResourceResponse, ResourceUpdate
-from app.services.dispatch_service import dispatch_service
-from app.core.security import require_viewer, require_dispatcher, require_admin
+from app.schemas import ResourceCreate, ResourceUpdate, ResourceResponse
 
-router = APIRouter(prefix="/resources", tags=["Resources"])
-logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/resources", tags=["Flood Resources"])
 
 
-@router.get("", response_model=dict)
+@router.get("", response_model=list[ResourceResponse])
 async def list_resources(
-    resource_type: str = Query(default=None),
-    status: str = Query(default=None),
-    zone_id: int = Query(default=None),
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    resource_type: Optional[str] = None,
+    status: Optional[str] = None,
+    zone_id: Optional[int] = None,
+    can_operate_in_water: Optional[bool] = None,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_viewer),
 ):
+    """List flood rescue resources with filters."""
     query = select(Resource).where(Resource.is_active == True)
+
     if resource_type:
         query = query.where(Resource.resource_type == resource_type)
     if status:
         query = query.where(Resource.status == status)
     if zone_id:
         query = query.where(Resource.zone_id == zone_id)
+    if can_operate_in_water is not None:
+        query = query.where(Resource.can_operate_in_water == can_operate_in_water)
 
-    total_q = await db.execute(select(func.count()).select_from(query.subquery()))
-    total = total_q.scalar()
-
-    query = query.offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(query)
-    resources = result.scalars().all()
-
-    return {
-        "items": [ResourceResponse.model_validate(r) for r in resources],
-        "total": total,
-        "page": page,
-        "page_size": page_size,
-    }
-
-
-@router.get("/availability", response_model=dict)
-async def get_resource_availability(
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_viewer),
-):
-    return await dispatch_service.get_resource_availability(db)
+    return result.scalars().all()
 
 
 @router.get("/{resource_id}", response_model=ResourceResponse)
-async def get_resource(
-    resource_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_viewer),
-):
+async def get_resource(resource_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Resource).where(Resource.id == resource_id))
     resource = result.scalar_one_or_none()
     if not resource:
-        raise HTTPException(status_code=404, detail=f"Resource {resource_id} not found")
-    return ResourceResponse.model_validate(resource)
+        raise HTTPException(status_code=404, detail="Resource not found")
+    return resource
 
 
-@router.post("", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ResourceResponse)
 async def create_resource(
-    payload: ResourceCreate,
+    data: ResourceCreate,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_admin),
 ):
     resource = Resource(
-        name=payload.name,
-        resource_type=payload.resource_type.value,
-        latitude=payload.latitude,
-        longitude=payload.longitude,
-        base_station=payload.base_station,
-        capacity=payload.capacity,
-        crew_count=payload.crew_count,
-        vehicle_id=payload.vehicle_id,
-        zone_id=payload.zone_id,
+        name=data.name,
+        resource_type=data.resource_type.value,
+        latitude=data.latitude,
+        longitude=data.longitude,
+        base_station=data.base_station,
+        capacity=data.capacity,
+        crew_count=data.crew_count,
+        passenger_capacity=data.passenger_capacity,
+        vehicle_id=data.vehicle_id,
+        zone_id=data.zone_id,
+        can_operate_in_water=data.can_operate_in_water,
+        max_water_depth_m=data.max_water_depth_m,
         status="available",
+        is_active=True,
     )
     db.add(resource)
     await db.flush()
-    return ResourceResponse.model_validate(resource)
+    return resource
 
 
-@router.patch("/{resource_id}", response_model=ResourceResponse)
+@router.put("/{resource_id}", response_model=ResourceResponse)
 async def update_resource(
     resource_id: int,
-    payload: ResourceUpdate,
+    data: ResourceUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_dispatcher),
 ):
     result = await db.execute(select(Resource).where(Resource.id == resource_id))
     resource = result.scalar_one_or_none()
     if not resource:
         raise HTTPException(status_code=404, detail="Resource not found")
 
-    if payload.status is not None:
-        resource.status = payload.status.value
-    if payload.latitude is not None:
-        resource.latitude = payload.latitude
-    if payload.longitude is not None:
-        resource.longitude = payload.longitude
-    resource.updated_at = datetime.utcnow()
-    await db.flush()
-    return ResourceResponse.model_validate(resource)
+    update_data = data.model_dump(exclude_none=True)
+    if update_data:
+        await db.execute(
+            update(Resource).where(Resource.id == resource_id).values(**update_data)
+        )
+    await db.refresh(resource)
+    return resource
 
 
-@router.delete("/{resource_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_resource(
-    resource_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_admin),
-):
-    result = await db.execute(select(Resource).where(Resource.id == resource_id))
-    resource = result.scalar_one_or_none()
-    if not resource:
-        raise HTTPException(status_code=404, detail="Resource not found")
-    resource.is_active = False
-    await db.flush()
+@router.get("/allocation-matrix", response_model=None)
+async def get_allocation_matrix(db: AsyncSession = Depends(get_db)):
+    """Get current resource allocation overview."""
+    from app.services.resource_allocation_service import resource_allocation_service
+    from app.models.emergency import FloodIncident
+
+    inc_result = await db.execute(
+        select(FloodIncident).where(FloodIncident.status == "pending")
+    )
+    res_result = await db.execute(
+        select(Resource).where(Resource.status == "available", Resource.is_active == True)
+    )
+
+    incidents = inc_result.scalars().all()
+    resources = res_result.scalars().all()
+
+    inc_dicts = [{"id": i.id, "latitude": i.latitude, "longitude": i.longitude,
+                  "water_level_m": i.water_level_m or 0, "predicted_severity": i.predicted_severity or "moderate",
+                  "people_stranded": i.people_stranded or 0} for i in incidents]
+    res_dicts = [{"id": r.id, "latitude": r.latitude, "longitude": r.longitude,
+                  "resource_type": r.resource_type, "name": r.name,
+                  "can_operate_in_water": r.can_operate_in_water,
+                  "max_water_depth_m": r.max_water_depth_m} for r in resources]
+
+    return resource_allocation_service.compute_allocation(inc_dicts, res_dicts)

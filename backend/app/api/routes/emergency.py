@@ -1,199 +1,208 @@
 """
-Emergency API Routes — SQLite compatible.
+Flood Incident API Routes — report, query, and manage flood incidents.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from datetime import datetime
 import logging
+from typing import Optional
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func, update
 
 from app.database import get_db
-from app.models.emergency import Emergency
-from app.schemas import (
-    EmergencyCreate, EmergencyResponse, EmergencyListResponse,
-    CrowdSourcedReport, MLPredictionResult
-)
+from app.models.emergency import FloodIncident
+from app.models.flood_zone import FloodZone
 from app.services.ml_service import ml_service
-from app.websocket_manager import ws_manager
-from app.core.security import get_current_user, require_viewer
+from app.schemas import (
+    FloodIncidentCreate, CrowdFloodReport,
+    FloodIncidentResponse, FloodIncidentListResponse,
+)
 
-router = APIRouter(prefix="/emergency", tags=["Emergency"])
 logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/flood", tags=["Flood Incidents"])
 
 
-@router.post("/report", response_model=EmergencyResponse, status_code=status.HTTP_201_CREATED)
-async def report_emergency(
-    payload: EmergencyCreate,
-    background_tasks: BackgroundTasks,
+def _find_zone_id(lat: float, lon: float, zones) -> Optional[int]:
+    """Find nearest zone for a coordinate."""
+    best_id = None
+    best_dist = float("inf")
+    for z in zones:
+        d = (z.center_latitude - lat) ** 2 + (z.center_longitude - lon) ** 2
+        if d < best_dist:
+            best_dist = d
+            best_id = z.id
+    return best_id
+
+
+@router.post("/report", response_model=FloodIncidentResponse)
+async def report_flood_incident(
+    data: FloodIncidentCreate,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_viewer),
 ):
+    """Report a new flood incident with ML severity prediction."""
+    # Find zone
+    zones_result = await db.execute(select(FloodZone))
+    zones = zones_result.scalars().all()
+    zone_id = _find_zone_id(data.latitude, data.longitude, zones)
+
+    # Get zone data for ML
+    zone = next((z for z in zones if z.id == zone_id), None)
+    elevation = zone.elevation_m if zone else 6.0
+    drainage_cap = zone.drainage_capacity_m3s if zone else 50.0
+    prox_water = zone.proximity_to_river_km if zone else 3.0
+    pop_density = (zone.population_density or 20000) / 1000 if zone else 20.0
+    hist_freq = zone.historical_flood_frequency if zone else 3.0
+
+    # Drainage ratio
+    drainage_ratio_map = {
+        "functional": 0.8, "partial": 0.5, "overwhelmed": 0.2, "collapsed": 0.05
+    }
+    drainage_ratio = drainage_ratio_map.get(data.drainage_status.value, 0.5)
+
     now = datetime.utcnow()
 
-    # ML Prediction
-    ml_result = ml_service.predict(
-        emergency_type=payload.emergency_type.value,
-        injury_level=payload.injury_level,
-        people_affected=payload.people_affected,
-        hazard_level=payload.hazard_level,
-        hour_of_day=now.hour,
-        day_of_week=now.weekday(),
-    )
+    # ML prediction
+    try:
+        ml_result = ml_service.predict(
+            rainfall_intensity_mmph=data.rainfall_intensity_mmph,
+            cumulative_rainfall_24h_mm=data.rainfall_intensity_mmph * 6,
+            elevation_m=elevation,
+            drainage_capacity_ratio=drainage_ratio,
+            soil_saturation_index=0.7,
+            proximity_to_waterbody_km=prox_water or 3.0,
+            population_density_k=pop_density,
+            hour_of_day=now.hour,
+            month=now.month,
+            historical_flood_freq=hist_freq or 3.0,
+            current_water_level_m=data.water_level_m,
+            rate_of_rise_m_per_hr=0.3,
+            flood_type=data.flood_type.value,
+            drainage_status=data.drainage_status.value,
+        )
+    except Exception as e:
+        logger.error(f"ML prediction failed: {e}")
+        ml_result = {
+            "severity": "moderate", "confidence": 0.5,
+            "inundation_risk_score": 0.5,
+            "predicted_water_level_1h": data.water_level_m,
+            "predicted_water_level_6h": data.water_level_m,
+            "risk_hotspot_score": 0.5,
+            "shap_values": {},
+        }
 
-    emergency = Emergency(
-        emergency_type=payload.emergency_type.value,
-        latitude=payload.latitude,
-        longitude=payload.longitude,
-        address=payload.address,
-        injury_level=payload.injury_level,
-        people_affected=payload.people_affected,
-        hazard_level=payload.hazard_level,
-        description=payload.description,
-        reporter_name=payload.reporter_name,
-        reporter_phone=payload.reporter_phone,
+    incident = FloodIncident(
+        latitude=data.latitude,
+        longitude=data.longitude,
+        address=data.address,
+        zone_id=zone_id,
+        flood_type=data.flood_type.value,
+        water_level_m=data.water_level_m,
+        rainfall_intensity_mmph=data.rainfall_intensity_mmph,
+        drainage_status=data.drainage_status.value,
+        people_stranded=data.people_stranded,
+        people_affected=data.people_affected,
+        structures_affected=data.structures_affected,
+        is_road_blocked=data.is_road_blocked,
+        description=data.description,
         predicted_severity=ml_result["severity"],
         severity_confidence=ml_result["confidence"],
-        shap_values=ml_result["shap_values"],
-        is_crowd_sourced=0,
+        inundation_risk_score=ml_result.get("inundation_risk_score"),
+        predicted_water_level_1h=ml_result.get("predicted_water_level_1h"),
+        predicted_water_level_6h=ml_result.get("predicted_water_level_6h"),
+        risk_hotspot_score=ml_result.get("risk_hotspot_score"),
+        shap_values=ml_result.get("shap_values"),
         status="pending",
-        reported_at=now,
+        reporter_name=data.reporter_name,
+        reporter_phone=data.reporter_phone,
+        is_crowd_sourced=False,
     )
-
-    db.add(emergency)
+    db.add(incident)
     await db.flush()
 
-    logger.info(f"Emergency {emergency.id}: {payload.emergency_type} | {ml_result['severity']} ({ml_result['confidence']:.2%})")
+    return incident
 
-    response_data = {
-        "id": emergency.id,
-        "emergency_type": emergency.emergency_type,
-        "latitude": emergency.latitude,
-        "longitude": emergency.longitude,
-        "address": emergency.address,
-        "injury_level": emergency.injury_level,
-        "people_affected": emergency.people_affected,
-        "hazard_level": emergency.hazard_level,
-        "description": emergency.description,
-        "predicted_severity": emergency.predicted_severity,
-        "severity_confidence": emergency.severity_confidence,
-        "shap_values": emergency.shap_values,
-        "status": emergency.status,
-        "reporter_name": emergency.reporter_name,
-        "reporter_phone": emergency.reporter_phone,
-        "is_crowd_sourced": emergency.is_crowd_sourced,
-        "zone_id": emergency.zone_id,
-        "reported_at": emergency.reported_at,
-        "dispatched_at": None,
-        "resolved_at": None,
-        "ml_prediction": MLPredictionResult(**ml_result),
-    }
 
-    background_tasks.add_task(
-        ws_manager.broadcast_emergency,
-        {
-            "id": emergency.id,
-            "type": payload.emergency_type.value,
-            "severity": ml_result["severity"],
-            "lat": payload.latitude,
-            "lon": payload.longitude,
-            "status": "pending",
-        },
-        "new_emergency"
+@router.post("/crowd-report", response_model=FloodIncidentResponse)
+async def crowd_flood_report(
+    data: CrowdFloodReport,
+    db: AsyncSession = Depends(get_db),
+):
+    """Citizen-reported flood observation."""
+    zones_result = await db.execute(select(FloodZone))
+    zones = zones_result.scalars().all()
+    zone_id = _find_zone_id(data.latitude, data.longitude, zones)
+
+    incident = FloodIncident(
+        latitude=data.latitude,
+        longitude=data.longitude,
+        zone_id=zone_id,
+        flood_type="pluvial",
+        water_level_m=data.water_level_m,
+        is_road_blocked=data.is_road_blocked,
+        description=data.description,
+        people_stranded=0,
+        people_affected=1,
+        status="pending",
+        reporter_name=data.reporter_name,
+        reporter_phone=data.reporter_phone,
+        is_crowd_sourced=True,
+        predicted_severity="moderate",
     )
+    db.add(incident)
+    await db.flush()
+    return incident
 
-    return EmergencyResponse(**response_data)
 
-
-@router.get("/{emergency_id}", response_model=EmergencyResponse)
-async def get_emergency(
-    emergency_id: int,
+@router.get("/{incident_id}", response_model=FloodIncidentResponse)
+async def get_flood_incident(
+    incident_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_viewer),
 ):
-    result = await db.execute(select(Emergency).where(Emergency.id == emergency_id))
-    emergency = result.scalar_one_or_none()
-    if not emergency:
-        raise HTTPException(status_code=404, detail=f"Emergency {emergency_id} not found")
-    return EmergencyResponse.model_validate(emergency)
+    result = await db.execute(select(FloodIncident).where(FloodIncident.id == incident_id))
+    incident = result.scalar_one_or_none()
+    if not incident:
+        raise HTTPException(status_code=404, detail="Flood incident not found")
+    return incident
 
 
-@router.get("s", response_model=EmergencyListResponse)
-async def list_emergencies(
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
-    status: str = Query(default=None),
-    emergency_type: str = Query(default=None),
-    severity: str = Query(default=None),
+@router.get("s", response_model=FloodIncidentListResponse)
+async def list_flood_incidents(
+    severity: Optional[str] = None,
+    status: Optional[str] = None,
+    zone_id: Optional[int] = None,
+    flood_type: Optional[str] = None,
+    min_water_level: Optional[float] = None,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_viewer),
 ):
-    query = select(Emergency).order_by(Emergency.reported_at.desc())
-    if status:
-        query = query.where(Emergency.status == status)
-    if emergency_type:
-        query = query.where(Emergency.emergency_type == emergency_type)
+    query = select(FloodIncident)
+
     if severity:
-        query = query.where(Emergency.predicted_severity == severity)
+        query = query.where(FloodIncident.predicted_severity == severity)
+    if status:
+        query = query.where(FloodIncident.status == status)
+    if zone_id:
+        query = query.where(FloodIncident.zone_id == zone_id)
+    if flood_type:
+        query = query.where(FloodIncident.flood_type == flood_type)
+    if min_water_level:
+        query = query.where(FloodIncident.water_level_m >= min_water_level)
 
-    total_result = await db.execute(select(func.count()).select_from(query.subquery()))
-    total = total_result.scalar()
+    total_q = await db.execute(
+        select(func.count()).select_from(query.subquery())
+    )
+    total = total_q.scalar() or 0
 
+    query = query.order_by(FloodIncident.reported_at.desc())
     query = query.offset((page - 1) * page_size).limit(page_size)
+
     result = await db.execute(query)
-    emergencies = result.scalars().all()
-
-    return EmergencyListResponse(
-        items=[EmergencyResponse.model_validate(e) for e in emergencies],
-        total=total,
-        page=page,
-        page_size=page_size,
-    )
-
-
-@router.post("/crowd-report", status_code=status.HTTP_202_ACCEPTED)
-async def crowd_sourced_report(
-    payload: CrowdSourcedReport,
-    db: AsyncSession = Depends(get_db),
-):
-    emergency = Emergency(
-        emergency_type=payload.emergency_type.value,
-        latitude=payload.latitude,
-        longitude=payload.longitude,
-        description=payload.description,
-        reporter_name=payload.reporter_name,
-        reporter_phone=payload.reporter_phone,
-        people_affected=payload.people_affected,
-        is_crowd_sourced=1,
-        status="pending",
-        reported_at=datetime.utcnow(),
-    )
-    db.add(emergency)
-    await db.flush()
+    items = result.scalars().all()
 
     return {
-        "message": "Report accepted for review",
-        "report_id": emergency.id,
-        "status": "queued",
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
     }
-
-
-@router.patch("/{emergency_id}/status")
-async def update_emergency_status(
-    emergency_id: int,
-    new_status: str = Query(...),
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_viewer),
-):
-    result = await db.execute(select(Emergency).where(Emergency.id == emergency_id))
-    emergency = result.scalar_one_or_none()
-    if not emergency:
-        raise HTTPException(status_code=404, detail="Emergency not found")
-
-    valid_statuses = ["pending", "dispatched", "in_progress", "resolved", "cancelled"]
-    if new_status not in valid_statuses:
-        raise HTTPException(status_code=400, detail=f"Invalid status: {new_status}")
-
-    emergency.status = new_status
-    await db.flush()
-    return {"emergency_id": emergency_id, "new_status": new_status}
