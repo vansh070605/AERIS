@@ -1,59 +1,90 @@
-# 🌊 Bihar Flood Resilience Platform
+# 🌊 AERIS: Bihar Flood Resilience & PERC Platform
 
-A cutting-edge, predictive Flood Resilience and Post-Event Learning (PERC) platform tailored for the Kosi/Gandak basins in Bihar, India. This project transitions disaster management from **reactive relief** to **predictive resilience**.
+> **Discover the Depths of Predictive Resilience.** A premium, high-fidelity platform for the Kosi and Gandak basins, transitioning disaster management from reactive relief to proactive, data-driven resilience.
 
-## 🚀 Key Features
+---
 
-1. **Multi-Criteria GIS Hazard Mapping**: Interactive Python Folium maps built using an AHP weighted overlay (DEM, soil permeability, river distance, rainfall, land use).
-2. **7-Day ML Predictive Forecasting**: XGBoost-powered forecasting engine that predicts embankment breach probabilities based on maintenance records, age, and live rainfall.
-3. **PERC Engine (Post-Event Learning)**: Automated damage assessment (crop loss, population affected) that generates analytical insights on *why* a flood occurred.
-4. **Resilience Scorecard**: District-wise accountability rankings based on relief response times and infrastructure maintenance.
-5. **Real-time API & Dashboard**: FastAPI backend serving predictions to a sleek, responsive Streamlit dashboard.
+## ✨ Key Enhancements (V2.0)
 
-## 🛠️ Tech Stack
+### 🛰️ Live Situation Room
+The core of the platform is now a **Situation Room Feed** providing real-time district-level risk updates, a live population-at-risk counter, and high-frequency risk activity logs.
 
-- **Backend**: FastAPI, Uvicorn
-- **Frontend / Dashboard**: Streamlit, Streamlit-Folium, Plotly
-- **GIS / Mapping**: Geopandas, Folium, Shapely
-- **Machine Learning**: Scikit-Learn, XGBoost, Pandas, Numpy
+### 📈 Visual Analytics Scorecard
+The **Resilience Scorecard** has been reimagined as a digital editorial spread. Powered by **Recharts**, it features interactive district-level comparison charts, infrastructure health rankings, and historical response time benchmarks.
 
-## 📂 Repository Structure
+### 🌊 7-Day ML Forecast Simulator
+A new **Scrubbing Slider** interface allows users to simulate flood risk 7 days into the future. Driven by an **XGBoost** predictive engine, it calculates breach probabilities based on live rainfall and embankment structural integrity.
 
-- `api/` - FastAPI application for ML model inference
-- `dashboard/` - Streamlit UI application
-- `data/` - Synthetic data generation scripts and generated datasets
-- `demo/` - Hackathon video script
-- `gis/` - Hazard mapping and AHP multi-criteria logic
-- `ml/` - XGBoost model training pipelines
-- `perc/` - Post-Event Learning processing engine
+### 📊 District Pulse Sparklines
+Every district in the live map now features a **Pulse Sparkline**, visualizing risk trends over the past 24 hours to identify emerging hotspots before they become emergencies.
+
+---
+
+## 🎨 Design Philosophy: "Discovery the Depths"
+The platform has pivoted to a **Wix-inspired Light Theme** ("Discover the Depths"):
+- **Typography**: Playfair Display Serif for an editorial, high-trust feel.
+- **Palette**: Cream background (`#FAF9F6`), Charcoal headings (`#1A1D1A`), and Deep Teal accents.
+- **Glassmorphism**: Subtle, translucent UI elements for a modern, airy experience.
+
+---
+
+## 🛠️ Modern Tech Stack
+
+- **Frontend**: React 19, Vite, Tailwind CSS 4, Framer Motion (Animations)
+- **Analytics**: Recharts, Lucide React (Icons)
+- **Mapping**: Leaflet.js, React Leaflet (Light Carto Base)
+- **Backend API**: FastAPI (Python), Flask (ML Inference)
+- **Data Science**: XGBoost, Scikit-Learn, Geopandas, AHP GIS Logic
+
+---
+
+## 📂 Project Structure
+
+```bash
+flood_resilience/
+├── frontend/        # React + Vite + Tailwind 4 implementation
+├── api/             # FastAPI backend for risk management
+├── ml/              # XGBoost model training & inference
+├── gis/             # AHP (Analytical Hierarchy Process) logic
+├── perc/            # Post-Event Learning (Automated damage assessment)
+├── data/            # Synthetic Bihar dataset generation
+└── demo/            # Media assets & scripts
+```
+
+---
 
 ## ⚡ Quickstart
 
-### 1. Setup Virtual Environment
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-pip install -r requirements.txt
-```
+### 1. Prerequisites
+- **Python 3.10+**
+- **Node.js 20+**
 
-### 2. Generate Data & Train Models
-Since this is a fresh clone, you need to generate the synthetic Bihar dataset and train the ML models:
+### 2. Backend Setup
 ```bash
+# From flood_resilience root
+python -m venv venv
+source venv/bin/activate  # Windows: .\venv\Scripts\activate
+pip install -r requirements.txt
 python data/generate_data.py
 python ml/train_models.py
-```
-
-### 3. Run the Dashboard
-```bash
-streamlit run dashboard/app.py
-```
-
-### 4. Run the API (Optional/Standalone)
-```bash
 uvicorn api.main:app --reload
 ```
 
-## 🏆 Hackathon Impact (BSDMA ROI)
-- **Life Savings**: 7-day early warnings for targeted NDRF deployment.
-- **Accountability**: Transparent metrics on embankment maintenance.
-- **Financial**: Data-driven optimization of post-flood recovery funds.
+### 3. Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
+# Open http://localhost:5173
+```
+
+---
+
+## 🏆 Impact & ROI
+- **Predictive Evacuation**: Saves lives via 7-day early warnings.
+- **Accountability**: Transparent district rankings for infrastructure maintenance.
+- **Efficiency**: Directs NDRF resources to high-risk zones before failure.
+
+---
+
+> Built for the **Bihar State Disaster Management Authority (BSDMA)**.
