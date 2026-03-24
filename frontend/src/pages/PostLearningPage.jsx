@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 
 export default function PostLearningPage() {
@@ -8,6 +8,9 @@ export default function PostLearningPage() {
         <div>
           <h2 className="text-5xl md:text-6xl font-serif text-[#1A1D1A] tracking-tight">Post-Mortem</h2>
           <p className="text-black/50 text-xs mt-4 tracking-widest uppercase font-bold">Target Archive: 2023 Kosi Breach</p>
+          <p className="text-black/40 text-sm mt-3 max-w-lg leading-relaxed">
+            Learn from past disasters. This page reconstructs the timeline of the 2023 Kosi embankment breach, analyzing what went wrong, how quickly relief was deployed, and what infrastructure gaps need to be addressed to prevent future casualties.
+          </p>
         </div>
         <button className="px-8 py-3 bg-transparent border border-[#1A1D1A]/20 text-[#1A1D1A] hover:bg-[#1A1D1A]/5 rounded-full text-[10px] font-bold tracking-widest uppercase transition-colors">
           Export Report

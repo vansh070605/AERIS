@@ -23,7 +23,7 @@ export default function LiveRiskMapPage() {
     
     const fetchRisk = () => {
       fetch('http://localhost:8000/risk/situation_room')
-        .then(r => r.json())
+        .then(r => { if (!r.ok) throw new Error(`API ${r.status}`); return r.json(); })
         .then(data => {
             setRiskData({
                 total_population_at_risk: (data.total_population_at_risk / 1000000).toFixed(2) + 'M',
@@ -112,9 +112,12 @@ export default function LiveRiskMapPage() {
       {/* Editorial Text Left Column */}
       <div className="xl:w-[380px] flex flex-col justify-between py-4 shrink-0">
           <div>
-            <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, ease:[0.16,1,0.3,1] }} className="text-6xl md:text-7xl font-serif text-[#1A1D1A] leading-[1.02] tracking-tight mb-6">
+            <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, ease:[0.16,1,0.3,1] }} className="text-6xl md:text-7xl font-serif text-[#1A1D1A] leading-[1.02] tracking-tight mb-4">
                 Predict<br />the tides.
             </motion.h1>
+            <p className="text-black/40 text-sm leading-relaxed mb-6 max-w-[340px]">
+              This interactive map shows real-time flood risk levels across all Bihar districts. Click any district to see population at risk, crop damage estimates, and a 24-hour risk trend powered by our AI models.
+            </p>
             
             <div className="bg-[#0B3D3D] text-[#FAF9F6] p-6 rounded-3xl mb-8 shadow-xl shadow-black/10 overflow-hidden relative">
                <Activity className="absolute top-4 right-4 text-white/10 w-16 h-16" />

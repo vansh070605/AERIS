@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { RadialBarChart, RadialBar, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -23,6 +23,9 @@ export default function ResilienceScorecardPage() {
         <div>
           <h2 className="text-5xl md:text-6xl font-serif text-[#1A1D1A] tracking-tight">Resilience Index</h2>
           <p className="text-black/50 text-xs mt-4 tracking-widest uppercase font-bold">Systematic Ranking of 38 Bihar Subsectors</p>
+          <p className="text-black/40 text-sm mt-3 max-w-lg leading-relaxed">
+            How prepared is each district for the next flood? This scorecard ranks all 38 Bihar districts by infrastructure readiness, emergency response time, and vulnerability level — helping officials prioritize where to invest in resilience.
+          </p>
         </div>
         <div className="flex gap-4">
            <div className="px-6 py-3 bg-[#0B3D3D]/5 rounded-2xl border border-[#0B3D3D]/10">

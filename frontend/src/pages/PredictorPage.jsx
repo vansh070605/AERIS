@@ -37,6 +37,9 @@ export default function PredictorPage() {
         <div className="mb-8 border-b border-black/5 pb-8">
           <h2 className="text-5xl md:text-6xl font-serif text-[#1A1D1A] tracking-tight">Telemetry Input</h2>
           <p className="text-black/50 text-xs mt-4 tracking-widest uppercase font-bold">Manual parameter override for predictive modeling</p>
+          <p className="text-black/40 text-sm mt-3 max-w-lg leading-relaxed">
+            Enter specific conditions for any Bihar district — rainfall, river level, population at risk — and our AI model will calculate the probability of severe flooding. This lets you test "what-if" scenarios to support decision-making.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl shadow-xl shadow-black/5 border border-black/5 flex flex-col gap-6">

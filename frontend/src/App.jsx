@@ -6,6 +6,8 @@ import ForecastTimelinePage from './pages/ForecastTimelinePage';
 import PredictorPage from './pages/PredictorPage';
 import PostLearningPage from './pages/PostLearningPage';
 import ResilienceScorecardPage from './pages/ResilienceScorecardPage';
+import RealTimeMonitorPage from './pages/RealTimeMonitorPage';
+import ResearchPage from './pages/ResearchPage';
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
           <Route path="predictor" element={<PredictorPage />} />
           <Route path="post-learning" element={<PostLearningPage />} />
           <Route path="scorecard" element={<ResilienceScorecardPage />} />
+          <Route path="telemetry" element={<RealTimeMonitorPage />} />
+          <Route path="research" element={<ResearchPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

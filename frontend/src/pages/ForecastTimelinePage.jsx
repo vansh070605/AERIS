@@ -134,6 +134,9 @@ export default function ForecastTimelinePage() {
         <div>
           <motion.h2 initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#1A1D1A] tracking-tight mb-2">Forecast Simulator</motion.h2>
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="text-black/50 text-xs tracking-widest uppercase font-bold">Select sector from map to initiate simulation | {district} Sector</motion.p>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="text-black/40 text-sm mt-3 max-w-xl leading-relaxed">
+            Simulate how a flood scenario would unfold over the next 7 days. Pick a district on the map, adjust rainfall and river levels using the sliders, then hit "Run Simulation" to see our XGBoost ML model predict the probability of severe flooding.
+          </motion.p>
         </div>
         <button onClick={handleSim} disabled={loading} className="px-10 py-5 bg-[#0B3D3D] text-[#FAF9F6] rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#1A1D1A] transition-all shadow-xl shadow-black/10 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden relative shrink-0">
           <span className="relative z-10 flex items-center gap-3">

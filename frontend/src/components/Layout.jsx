@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Map, Activity, BookOpen, ShieldAlert, Radio, Settings } from 'lucide-react';
@@ -39,12 +39,18 @@ export default function Layout() {
             <NavLink to="/predictor" className={({isActive}) => `flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${isActive ? 'bg-[#0B3D3D] text-[#FAF9F6] shadow-md shadow-[#0B3D3D]/20' : 'text-black/60 hover:bg-black/5 hover:text-[#1A1D1A]'}`}>
               <Settings size={16} /> Telemetry Input
             </NavLink>
+            <NavLink to="/telemetry" className={({isActive}) => `flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${isActive ? 'bg-[#0B3D3D] text-[#FAF9F6] shadow-md shadow-[#0B3D3D]/20' : 'text-black/60 hover:bg-black/5 hover:text-[#1A1D1A]'}`}>
+              <Radio size={16} /> River Pulse
+            </NavLink>
             <div className="w-px h-6 bg-black/10 mx-1 sm:mx-2" />
             <NavLink to="/post-learning" className={({isActive}) => `flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${isActive ? 'bg-[#0B3D3D] text-[#FAF9F6] shadow-md shadow-[#0B3D3D]/20' : 'text-black/60 hover:bg-black/5 hover:text-[#1A1D1A]'}`}>
               <BookOpen size={16} /> Post-Mortem
             </NavLink>
             <NavLink to="/scorecard" className={({isActive}) => `flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${isActive ? 'bg-[#0B3D3D] text-[#FAF9F6] shadow-md shadow-[#0B3D3D]/20' : 'text-black/60 hover:bg-black/5 hover:text-[#1A1D1A]'}`}>
               <ShieldAlert size={16} /> Scorecard
+            </NavLink>
+            <NavLink to="/research" className={({isActive}) => `flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${isActive ? 'bg-[#0B3D3D] text-[#FAF9F6] shadow-md shadow-[#0B3D3D]/20' : 'text-black/60 hover:bg-black/5 hover:text-[#1A1D1A]'}`}>
+              <BookOpen size={16} /> Research
             </NavLink>
           </div>
         </div>
@@ -76,7 +82,7 @@ export default function Layout() {
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full h-full max-w-[1400px] mx-auto"
+            className="w-full min-h-full max-w-[1400px] mx-auto"
           >
             <Outlet />
           </motion.div>
