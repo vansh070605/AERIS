@@ -1,80 +1,72 @@
-# 🌊 AERIS — AI Emergency Intelligence & Resilience Allocation System
+# AERIS — AI Emergency Intelligence & Resilience Allocation System
 
-> **A premium, high-fidelity predictive resilience platform.** AERIS transforms disaster management from reactive relief to proactive, data-driven resilience, currently specialized for the Kosi and Gandak basins in Bihar, India.
+## 🌊 About the Project
+AERIS is a high-precision, AI-driven emergency management platform designed to mitigate the impact of seasonal flooding and infrastructure failures, specifically focused on the high-risk flood zones of Bihar, India. It provides real-time risk assessment, predictive analytics, and post-event resilience scoring to help disaster management authorities allocate resources effectively.
+
+### 🛑 The Problem
+Bihar faces catastrophic floods annually, leading to:
+- **Massive Population Displacement**: Over 1M+ people are often at risk simultaneously.
+- **Infrastructure Vulnerability**: Embankment breaches are difficult to predict with traditional methods.
+- **Information Latency**: Slow data flow from the field delays emergency response and resource deployment.
+- **Resource Inefficiency**: Rescue and relief efforts are often reactive rather than proactive.
+
+### 💡 The Solution (AERIS)
+AERIS bridges the gap between raw telemetry and actionable intelligence through:
+- **Predictive Breach Modeling**: Using XGBoost ML models to predict embankment failures based on rainfall, river levels, and structure age.
+- **Live Intelligence Horizon**: A real-time map displaying population-at-risk counters and automated situation room feeds.
+- **7-Day Risk Forecasting**: Probabilistic simulations that allow authorities to "look into the future" and pre-position resources.
+- **Resilience Matrix**: Data-driven scorecard to rank district readiness and identify underdeveloped subsectors.
 
 ---
 
-## 📐 Specialized Implementation: Bihar Flood Resilience
-The flagship implementation of AERIS is the **Bihar Flood Resilience Platform**, located in the [`flood_resilience/`](./flood_resilience) directory.
+## 🚀 Getting Started (Run from Scratch)
 
-### Key Capabilities:
-- **7-Day ML Predictive Forecasting**: XGBoost-powered engine predicting embankment breaches.
-- **Situation Room Feed**: Real-time district-level risk monitoring and population-at-risk counters.
-- **Resilience Scorecard**: Interactive Recharts-based district accountability rankings.
-- **PERC Engine**: Automated post-event learning and damage assessment.
+### 📋 Prerequisites
+- **Python 3.10+**
+- **Node.js 18+**
+- **Virtual Environment** (recommended)
 
----
+### 🛠️ Step 1: Backend Setup
+Open a terminal in the project root:
+```bash
+# Create and activate virtual environment
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # Linux/Mac
 
-## 🛠️ Unified Architecture
+# Install dependencies
+pip install -r requirements.txt
 
+# Start the API server
+python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
 ```
-┌───────────────────────────────────────────────────────────────┐
-│                        AERIS SYSTEM                           │
-│                                                               │
-│  ┌─────────────┐    REST/WS    ┌────────────────────────────┐ │
-│  │ React 19    │◄─────────────►│ FastAPI (Python)           │ │
-│  │ Vite/Tailwind│               │ ├── ML Service (XGBoost)   │ │
-│  │ Leaflet.js  │               │ ├── Routing (Dijkstra/A*)  │ │
-│  │ Framer Motion│               │ ├── Dispatch Service       │ │
-│  └─────────────┘               └────────────┬───────────────┘ │
-│                                             │                 │
-│  ┌──────────┐  ┌──────────┐   ┌────────────┴───────────────┐  │
-│  │  Redis   │  │PostgreSQL│   │  Celery Workers            │  │
-│  │ (Queue)  │  │ +PostGIS │   │  (Background Tasks)        │ │
-│  └──────────┘  └──────────┘   └────────────────────────────┘ │
-└───────────────────────────────────────────────────────────────┘
+
+### 🎨 Step 2: Frontend Setup
+Open a **new** terminal in the `frontend/` directory:
+```bash
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
+```
+
+### 🧠 Step 3: ML Model Training (Optional/First time)
+If models are not found in the `ml/` folder:
+```bash
+python ml/train_models.py
 ```
 
 ---
 
-## 🚀 Featured Tech Stack
+## 📊 Terminal Commands Summary
 
-| Component | Technology |
+| Task | Command |
 |---|---|
+| **Run Backend** | `python -m uvicorn api.main:app --host 0.0.0.0 --port 8000` |
+| **Run Frontend** | `cd frontend && npm run dev` |
+| **Train Models** | `python ml/train_models.py` |
+| **Check API** | `curl http://localhost:8000/` |
 
 ---
-
-## 🔮 Future Improvements
-
-1. **Integration with OSMnx** for real-world road networks (replace synthetic city graph)
-2. **LSTM-based time-series** early warning model for more accurate risk predictions
-3. **Drone dispatch** routing for aerial emergency response
-4. **IoT sensor integration** — connect real-time sensors (smoke detectors, weather, CCTV)
-5. **Mobile app** for field officers with offline mode
-6. **Inter-city coordination** — Multi-jurisdiction resource sharing
-7. **AutoML retraining** — Continuous model improvement with new dispatch data
-8. **Advanced equity model** — Multi-factor underservice scoring (demographics, income)
-9. **Predictive pre-positioning** — Pre-deploy resources to high-risk zones proactively
-10. **Audit logging** — Full immutable audit trail for legal compliance
-
----
-
-## 📈 Performance Targets
-
-| Metric | Target | Status |
-|--------|--------|--------|
-| API response time | < 1 second | ✅ |
-| ML prediction | < 200ms | ✅ |
-| Routing calculation | < 300ms | ✅ |
-| WebSocket latency | < 50ms | ✅ |
-| Dispatch success rate | > 99% | ✅ |
-
----
-
-## 📄 License
-
-MIT License — For emergency management research and production deployment.
-
----
-
-> Built with ❤️ for saving lives. AEIRAS — Because every second counts.
+> AERIS — Because every second counts.
