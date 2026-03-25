@@ -21,7 +21,7 @@ export default function ResearchPage() {
       {/* Hero */}
       <motion.div {...fadeUp()} className="mb-16 border-b border-black/5 pb-12">
         <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#0B3D3D] mb-4">Research Overview</div>
-        <h1 className="text-5xl md:text-7xl font-serif text-[#1A1D1A] tracking-tight leading-[1.05] mb-6 max-w-3xl">
+        <h1 className="text-4xl md:text-7xl font-serif text-[#1A1D1A] tracking-tight leading-[1.05] mb-6 max-w-3xl">
           Rethinking Flood<br />Response with AI.
         </h1>
         <p className="text-black/50 text-sm leading-relaxed max-w-2xl">
@@ -41,7 +41,7 @@ export default function ResearchPage() {
           </div>
         </div>
 
-        <div className="bg-red-50/50 border border-red-100/50 rounded-3xl p-8 md:p-10 mb-8">
+        <div className="bg-red-50/50 border border-red-100/50 rounded-3xl p-6 md:p-10 mb-8">
           <p className="text-black/60 text-sm leading-relaxed mb-6">
             Bihar is India's most flood-prone state, with <strong>76% of the North Bihar population</strong> living under the recurring threat of devastating floods. Every monsoon season, rivers like the Kosi, Gandak, and Bagmati breach aging embankments, displacing millions and causing catastrophic damage to agriculture and infrastructure.
           </p>
@@ -151,7 +151,7 @@ export default function ResearchPage() {
           </div>
         </div>
 
-        <div className="bg-[#0B3D3D] text-[#FAF9F6] rounded-3xl p-8 md:p-12 mb-8 relative overflow-hidden">
+        <div className="bg-[#0B3D3D] text-[#FAF9F6] rounded-3xl p-6 md:p-12 mb-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
           <div className="relative z-10 max-w-2xl">

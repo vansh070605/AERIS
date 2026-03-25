@@ -74,6 +74,28 @@ These predictions feed into a **real-time decision platform** with 7 integrated 
 
 ```
 AERIS/
+├── api/                         # FastAPI backend (ML inference + telemetry)
+│   └── main.py                  # All API endpoints
+│
+├── ml/                          # ML models (all in one folder)
+│   ├── train_models.py          # Model training script
+│   ├── breach_xgb_model.pkl     # Trained breach prediction model
+│   └── flood_prob_model.pkl     # Trained flood classification model
+│
+├── data/                        # Datasets & data generation
+│   ├── flood_data.csv           # Synthetic 10-year flood dataset
+│   ├── bihar_flood_data.csv     # Bihar flood data
+│   ├── bihar_districts.geojson  # District boundary GeoJSON
+│   ├── bihar_flood.ipynb        # Analysis notebook
+│   ├── generate_data.py         # Data generation script
+│   └── *.png                    # Analysis charts (correlation, ROC, etc.)
+│
+├── gis/                         # GIS hazard mapping (AHP logic)
+│   └── hazard_mapping.py        # Multi-criteria flood risk zoning
+│
+├── perc/                        # Post-Event Review & Learning
+│   └── post_event_learning.py   # PERC analysis functions
+│
 ├── frontend/                    # React + Vite frontend application
 │   ├── src/
 │   │   ├── components/
@@ -91,17 +113,9 @@ AERIS/
 │   └── public/
 │       └── bihar_districts_real.geojson   # Bihar GeoJSON boundary data
 │
-├── flood_resilience/
-│   ├── api/
-│   │   └── main.py              # FastAPI backend (ML inference + telemetry)
-│   ├── ml/
-│   │   ├── train_models.py      # Model training scripts
-│   │   ├── breach_model.pkl     # Trained breach prediction model
-│   │   └── flood_model.pkl      # Trained flood classification model
-│   ├── gis/                     # AHP (Analytical Hierarchy Process) logic
-│   ├── perc/                    # Post-Event Learning modules
-│   └── data/                    # Bihar dataset generation
-│
+├── AERIS.pdf                    # Project documentation
+├── requirements.txt             # Python dependencies
+├── .gitignore
 └── README.md                    # This file
 ```
 
@@ -115,8 +129,7 @@ AERIS/
 
 ### 1. Backend Setup
 ```bash
-# From the project root
-cd flood_resilience
+# From the project root (AERIS/)
 
 # Create and activate virtual environment
 python -m venv .venv
@@ -126,7 +139,7 @@ source .venv/bin/activate       # Linux/Mac
 # Install dependencies
 pip install -r requirements.txt
 
-# (Optional) Train ML models if not present
+# (Optional) Train ML models if .pkl files are not present
 python ml/train_models.py
 
 # Start the API server
@@ -135,7 +148,7 @@ python -m uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 
 ### 2. Frontend Setup
 ```bash
-# From the project root
+# From the project root (AERIS/)
 cd frontend
 
 # Install dependencies
@@ -150,9 +163,10 @@ npm run dev
 
 | Task | Command |
 |------|---------|
-| **Run Backend** | `cd flood_resilience && python -m uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload` |
+| **Run Backend** | `python -m uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload` |
 | **Run Frontend** | `cd frontend && npm run dev` |
-| **Train Models** | `cd flood_resilience && python ml/train_models.py` |
+| **Train Models** | `python ml/train_models.py` |
+| **Generate Data** | `python data/generate_data.py` |
 | **Check API** | `curl http://localhost:8000/` |
 
 ---
@@ -162,8 +176,8 @@ npm run dev
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/` | Health check |
-| `POST` | `/predict` | Flood risk prediction (primary ML inference) |
-| `POST` | `/predict/breach` | Embankment breach probability |
+| `POST` | `/predict` | Flood risk prediction (primary ML inference, returns percentage) |
+| `POST` | `/predict/breach` | Embankment breach probability (returns 0-1 probability + alert level) |
 | `POST` | `/predict/7day_forecast` | 7-day daily risk forecast |
 | `GET` | `/risk/situation_room` | Simulated situation room telemetry |
 | `GET` | `/telemetry/realtime` | Real-time data for 18 river gauge stations |

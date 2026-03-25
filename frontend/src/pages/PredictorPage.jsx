@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function PredictorPage() {
   const [formData, setFormData] = useState({
     District: 'Patna',
-    Rainfall_mm: '150',
-    River_Level_m: '10.5',
+    Rainfall_mm: '1000',
+    River_Level_m: '11.5',
     Danger_Level_m: '12.0',
     Population: '500000',
     Crop_Area_ha: '25000',
@@ -32,18 +32,18 @@ export default function PredictorPage() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col pb-8 lg:flex-row gap-12">
+    <div className="w-full h-full flex flex-col pb-12 lg:flex-row gap-8 lg:gap-12 overflow-y-auto no-scrollbar">
       <div className="lg:w-1/2 flex flex-col">
         <div className="mb-8 border-b border-black/5 pb-8">
-          <h2 className="text-5xl md:text-6xl font-serif text-[#1A1D1A] tracking-tight">Telemetry Input</h2>
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif text-[#1A1D1A] tracking-tight">Telemetry Input</h2>
           <p className="text-black/50 text-xs mt-4 tracking-widest uppercase font-bold">Manual parameter override for predictive modeling</p>
           <p className="text-black/40 text-sm mt-3 max-w-lg leading-relaxed">
             Enter specific conditions for any Bihar district — rainfall, river level, population at risk — and our AI model will calculate the probability of severe flooding. This lets you test "what-if" scenarios to support decision-making.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl shadow-xl shadow-black/5 border border-black/5 flex flex-col gap-6">
-           <div className="grid grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 rounded-3xl shadow-xl shadow-black/5 border border-black/5 flex flex-col gap-6">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[
                 { 
                   label: 'Sector (District)', 
@@ -92,18 +92,41 @@ export default function PredictorPage() {
         </form>
       </div>
 
-      <div className="lg:w-1/2 flex items-center justify-center p-12 bg-[#F4F2EC] rounded-[2rem] border border-black/5">
+      <div className="lg:w-1/2 flex items-center justify-center p-6 md:p-12 bg-[#F4F2EC] rounded-[2rem] border border-black/5 min-h-[350px]">
         <AnimatePresence mode="wait">
            {result === null ? (
-             <motion.div key="idle" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-black/30 text-center uppercase text-xs font-bold tracking-widest max-w-xs leading-relaxed">
-               Input telemetry parameters and execute to receive probabilistic AI output.
+             <motion.div key="idle" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="flex flex-col gap-8 w-full">
+                <div className="text-[#0B3D3D] border-b border-black/5 pb-4">
+                  <h3 className="text-2xl font-serif">Modeling Methodology</h3>
+                  <p className="text-[10px] uppercase tracking-widest font-bold opacity-50 mt-1">XGBoost Regression Framework</p>
+                </div>
+                
+                <div className="grid gap-6">
+                  {[
+                    { icon: '🌧️', title: 'Precipitation Weight', desc: 'Rainfall intensity is the primary driver. Values >1200mm in Bihar typically signal extreme flood risk.' },
+                    { icon: '🏗️', title: 'Infrastructure Age', desc: 'Aging embankments (Bihar avg: 28yrs) have higher structural fatigue and seepage risk.' },
+                    { icon: '📅', title: 'Temporal Sensitivity', desc: 'Predictions are weighted heavily for Monsoon months (June-September) based on historical decadal data.' }
+                  ].map(item => (
+                    <div key={item.title} className="flex gap-4">
+                      <span className="text-2xl">{item.icon}</span>
+                      <div>
+                        <div className="text-xs font-bold text-[#1A1D1A] uppercase tracking-wider">{item.title}</div>
+                        <p className="text-sm text-black/40 mt-1 leading-relaxed">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 p-6 bg-white/50 rounded-2xl border border-black/5 italic text-sm text-black/60 leading-relaxed text-center">
+                  "Adjust the month and rainfall to see how the model transitions from pre-monsoon baseline to critical emergency levels."
+                </div>
              </motion.div>
            ) : (
              <motion.div key="res" initial={{scale:0.95, opacity:0}} animate={{scale:1, opacity:1}} className="text-center">
                <div className="text-[10px] text-black/40 font-bold tracking-widest uppercase mb-6">Calculated Risk Factor</div>
-               <div className={`text-8xl md:text-[8rem] font-serif leading-none tracking-tighter drop-shadow-sm ${result > 75 ? 'text-[#991b1b]' : result > 40 ? 'text-[#b45309]' : 'text-[#0B3D3D]'}`}>
-                 {result.toFixed(1)}%
-               </div>
+                <div className={`text-6xl md:text-[8rem] font-serif leading-none tracking-tighter drop-shadow-sm ${result > 75 ? 'text-[#991b1b]' : result > 40 ? 'text-[#b45309]' : 'text-[#0B3D3D]'}`}>
+                  {result.toFixed(1)}%
+                </div>
                <div className={`text-sm font-bold mt-8 uppercase tracking-widest ${result > 75 ? 'text-red-700' : result > 40 ? 'text-[#b45309]' : 'text-black/50'}`}>
                  {result > 75 ? 'Critical: Evacuation Recommended' : result > 40 ? 'Warning: Monitor Closely' : 'Nominal Sector Conditions'}
                </div>

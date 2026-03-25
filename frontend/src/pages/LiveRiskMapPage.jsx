@@ -56,7 +56,7 @@ export default function LiveRiskMapPage() {
       weight: 1,
       opacity: 0.5,
       color: '#1A1D1A',
-      fillOpacity: 0.3
+      fillOpacity: 0.5
     };
   };
 
@@ -107,12 +107,12 @@ export default function LiveRiskMapPage() {
   };
 
   return (
-    <div className="h-full w-full flex flex-col xl:flex-row gap-8 relative pb-6 lg:pb-0 overflow-hidden">
+    <div className="h-full w-full flex flex-col xl:flex-row gap-8 relative pb-12 overflow-y-auto xl:overflow-hidden no-scrollbar">
       
       {/* Editorial Text Left Column */}
-      <div className="xl:w-[380px] flex flex-col justify-between py-4 shrink-0">
+      <div className="order-1 xl:w-[380px] flex flex-col justify-between py-4 shrink-0">
           <div>
-            <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, ease:[0.16,1,0.3,1] }} className="text-6xl md:text-7xl font-serif text-[#1A1D1A] leading-[1.02] tracking-tight mb-4">
+            <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, ease:[0.16,1,0.3,1] }} className="text-4xl md:text-7xl font-serif text-[#1A1D1A] leading-[1.02] tracking-tight mb-4">
                 Predict<br />the tides.
             </motion.h1>
             <p className="text-black/40 text-sm leading-relaxed mb-6 max-w-[340px]">
@@ -205,12 +205,11 @@ export default function LiveRiskMapPage() {
           </AnimatePresence>
       </div>
 
-      {/* Map Right Column */}
-      <div className="flex-1 rounded-[2.5rem] overflow-hidden shadow-2xl relative z-0 min-h-[500px] border border-black/5 bg-[#F4F2EC]">
-        <MapContainer center={[25.5, 85.5]} zoom={7} scrollWheelZoom={false} className="w-full h-full" zoomControl={false}>
+      <div className="order-2 xl:flex-1 rounded-[2.5rem] overflow-hidden shadow-2xl relative z-0 h-[500px] md:min-h-[500px] border border-black/5 bg-[#F4F2EC] shrink-0">
+        <MapContainer center={[25.5, 85.5]} zoom={window.innerWidth < 1024 ? 7.5 : 7} scrollWheelZoom={true} dragging={true} tap={false} className="w-full h-full" zoomControl={true}>
           <TileLayer attribution='&copy; CARTO' url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
           {geoData && (
-            <GeoJSON data={geoData} style={getStyle} onEachFeature={onEachFeature} />
+            <GeoJSON key={`home-map-${window.innerWidth}`} data={geoData} style={getStyle} onEachFeature={onEachFeature} />
           )}
         </MapContainer>
       </div>

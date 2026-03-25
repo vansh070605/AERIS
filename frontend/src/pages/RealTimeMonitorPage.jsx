@@ -94,7 +94,7 @@ export default function RealTimeMonitorPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-5xl md:text-6xl font-serif text-[#1A1D1A] tracking-tight leading-tight">River Pulse.</h2>
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif text-[#1A1D1A] tracking-tight leading-tight">River Pulse.</h2>
           <p className="text-black/50 text-xs mt-2 tracking-widest uppercase font-bold">
             Live Telemetry · {stations.length} Gauges · 5 Basins
           </p>
@@ -102,8 +102,8 @@ export default function RealTimeMonitorPage() {
             Live monitoring of 18 river gauge stations across Bihar. Our XGBoost ML models predict breach risk and flood probability for each station in real-time. Data auto-refreshes every 10 seconds.
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-4 py-2 bg-[#0B3D3D]/5 rounded-full border border-[#0B3D3D]/10">
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <div className="flex items-center gap-2 px-4 py-2 bg-[#0B3D3D]/5 rounded-full border border-[#0B3D3D]/10 w-full sm:w-auto justify-center">
             <RefreshCw className={`w-3.5 h-3.5 text-[#0B3D3D] ${countdown <= 2 ? 'animate-spin' : ''}`} />
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#0B3D3D]">
               Refresh: {countdown}s
@@ -113,27 +113,27 @@ export default function RealTimeMonitorPage() {
       </div>
 
       {/* Main Split View */}
-      <div className="flex-1 flex flex-col xl:flex-row gap-6 min-h-0">
-        {/* Left — GIS Map */}
-        <div className="xl:w-[45%] flex flex-col gap-4 min-h-[400px]">
+      <div className="flex-1 flex flex-col xl:flex-row gap-6 min-h-0 overflow-y-auto no-scrollbar xl:overflow-hidden">
+        {/* Left ΓÇö GIS Map */}
+        <div className="xl:w-[45%] flex flex-col gap-4 h-[500px] md:min-h-[400px] shrink-0">
           <div className="flex-1 rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 relative bg-[#F4F2EC]">
             {!loading && (
-              <MapContainer center={[25.8, 85.8]} zoom={7} scrollWheelZoom={true} className="w-full h-full" zoomControl={false}>
+              <MapContainer center={[25.8, 85.8]} zoom={window.innerWidth < 1024 ? 7.5 : 7} scrollWheelZoom={true} dragging={true} tap={false} className="w-full h-full" zoomControl={true}>
                 <TileLayer attribution='&copy; CARTO' url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                 {geoData && (
                   <GeoJSON
-                    key={JSON.stringify(districtMap)}
+                    key={`pulse-map-${window.innerWidth}`}
                     data={geoData}
                     style={(feature) => {
                       const distName = feature.properties.NAME_2;
                       const info = districtMap[distName];
-                      if (!info) return { fillColor: '#166534', fillOpacity: 0.08, color: '#1A1D1A', weight: 1, opacity: 0.3 };
+                      if (!info) return { fillColor: '#166534', fillOpacity: 0.15, color: '#1A1D1A', weight: 1, opacity: 0.3 };
                       const color = info.alert_type === 'Above Danger Level' ? '#991b1b'
                         : info.alert_type === 'Above Warning Level' ? '#b45309' : '#166534';
                       const isActive = selected && info.stations.some(s => s.station === selected);
                       return {
                         fillColor: color,
-                        fillOpacity: isActive ? 0.5 : 0.3,
+                        fillOpacity: isActive ? 0.7 : 0.5,
                         color: '#1A1D1A',
                         weight: isActive ? 2 : 1,
                         opacity: 0.5,
