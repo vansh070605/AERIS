@@ -22,7 +22,7 @@ export default function LiveRiskMapPage() {
     fetch('/bihar_districts_real.geojson').then(r => r.json()).then(setGeoData).catch(()=>console.log('geo err'));
     
     const fetchRisk = () => {
-      fetch('http://localhost:8000/risk/situation_room')
+      fetch(`http://${window.location.hostname}:8000/risk/situation_room`)
         .then(r => { if (!r.ok) throw new Error(`API ${r.status}`); return r.json(); })
         .then(data => {
             setRiskData({
@@ -205,8 +205,8 @@ export default function LiveRiskMapPage() {
           </AnimatePresence>
       </div>
 
-      <div className="order-2 xl:flex-1 rounded-[2.5rem] overflow-hidden shadow-2xl relative z-0 h-[500px] md:min-h-[500px] border border-black/5 bg-[#F4F2EC] shrink-0">
-        <MapContainer center={[25.5, 85.5]} zoom={window.innerWidth < 1024 ? 7.5 : 7} scrollWheelZoom={true} dragging={true} tap={false} className="w-full h-full" zoomControl={true}>
+      <div className="order-2 xl:flex-1 rounded-[2.5rem] overflow-hidden shadow-2xl relative z-0 h-[600px] xl:h-[75vh] border border-black/5 bg-[#F4F2EC]">
+        <MapContainer center={[25.5, 85.5]} zoom={window.innerWidth < 1024 ? 6.5 : 7} scrollWheelZoom={true} dragging={true} tap={false} className="w-full h-full" zoomControl={true}>
           <TileLayer attribution='&copy; CARTO' url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
           {geoData && (
             <GeoJSON key={`home-map-${window.innerWidth}`} data={geoData} style={getStyle} onEachFeature={onEachFeature} />

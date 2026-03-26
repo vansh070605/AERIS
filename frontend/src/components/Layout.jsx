@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Map, Activity, BookOpen, ShieldAlert, Radio, Settings, Menu, X } from 'lucide-react';
+import { Map, Activity, BookOpen, ShieldAlert, Radio, Settings, Menu, X, Smartphone } from 'lucide-react';
+import MobileConnect from './MobileConnect';
 
 const alertMessages = [
   "[OFFICIALS] Evacuate 15,000 from Madhubani NOW",
@@ -74,8 +75,11 @@ export default function Layout() {
           </div>
         </div>
         
-        <div className="hidden lg:flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-[#0B3D3D]">
-          Global Live Feed Active
+        <div className="hidden lg:flex items-center gap-6">
+          <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-[#0B3D3D]">
+            Global Live Feed Active
+          </div>
+          <MobileConnect />
         </div>
       </nav>
 

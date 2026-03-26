@@ -10,7 +10,7 @@ app = FastAPI(title="Bihar Flood Resilience API", version="1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
+    allow_origins=["*"],  # Allow all origins for local dev/mobile testing
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -42,6 +42,21 @@ class PredictRequest(BaseModel):
 @app.get("/")
 def health_check():
     return {"status": "ok", "message": "Bihar Flood Platform API"}
+
+@app.get("/system/info")
+def system_info():
+    """Returns local network IP for mobile connection QR code."""
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('8.8.8.8', 1))
+        local_ip = s.getsockname()[0]
+    except Exception:
+        local_ip = '127.0.0.1'
+    finally:
+        s.close()
+    return {"local_ip": local_ip, "port": 8000, "frontend_port": 5173}
 
 def load_models():
     ml_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'ml')

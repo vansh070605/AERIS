@@ -42,13 +42,24 @@ export default function ForecastTimelinePage() {
   }, [logs]);
 
   const getMapStyle = (feature) => {
-    const isSelected = feature.properties.NAME_2 === district;
+    const dist = feature.properties.NAME_2;
+    const isSelected = dist === district;
+    
+    // Consistent coloring with other map pages
+    const isHighRisk = ['Supaul', 'Darbhanga', 'Madhubani', 'Saharsa'].includes(dist);
+    const isWarning = ['Muzaffarpur', 'Sitamarhi', 'Katihar', 'Khagaria', 'Kishanganj'].includes(dist);
+    
+    let color = '#166534'; 
+    if (isHighRisk) color = '#991b1b'; 
+    if (isWarning) color = '#b45309'; 
+    if (isSelected) color = '#0B3D3D';
+
     return {
-      fillColor: isSelected ? '#0B3D3D' : '#166534',
+      fillColor: color,
       weight: isSelected ? 2 : 1,
       opacity: 0.5,
       color: '#1A1D1A',
-      fillOpacity: isSelected ? 0.6 : 0.2
+      fillOpacity: isSelected ? 0.7 : 0.3
     };
   };
 
@@ -103,7 +114,7 @@ export default function ForecastTimelinePage() {
         Day: day
       };
       
-      const res = await fetch('http://localhost:8000/predict', {
+      const res = await fetch(`http://${window.location.hostname}:8000/predict`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -155,7 +166,7 @@ export default function ForecastTimelinePage() {
          {/* Left Side: Map Selector & Sliders */}
          <div className="w-full xl:w-[350px] flex flex-col gap-6 shrink-0">
             <div className="h-[500px] md:h-[400px] xl:h-[300px] bg-[#F4F2EC] rounded-3xl border border-black/5 overflow-hidden shadow-xl shadow-black/5 relative group">
-              <MapContainer center={[25.8, 85.5]} zoom={window.innerWidth < 1024 ? 7.5 : 7} scrollWheelZoom={false} dragging={true} tap={false} className="w-full h-full grayscale hover:grayscale-0 transition-all duration-700" zoomControl={true}>
+              <MapContainer center={[25.8, 85.5]} zoom={window.innerWidth < 1024 ? 6.5 : 7} scrollWheelZoom={false} dragging={true} tap={false} className="w-full h-full transition-all duration-700" zoomControl={true}>
                 <TileLayer attribution='&copy; CARTO' url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                 {geoData && (
                   <GeoJSON key={`${district}-${window.innerWidth}`} data={geoData} style={getMapStyle} onEachFeature={onEachFeature} />

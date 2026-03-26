@@ -41,7 +41,7 @@ export default function RealTimeMonitorPage() {
   const tableRef = useRef(null);
 
   const fetchData = () => {
-    fetch('http://localhost:8000/telemetry/realtime')
+    fetch(`http://${window.location.hostname}:8000/telemetry/realtime`)
       .then(r => { if (!r.ok) throw new Error(`API ${r.status}`); return r.json(); })
       .then(d => { setData(d); setLoading(false); })
       .catch(e => { console.error('Telemetry API offline', e); setLoading(false); });
@@ -115,10 +115,10 @@ export default function RealTimeMonitorPage() {
       {/* Main Split View */}
       <div className="flex-1 flex flex-col xl:flex-row gap-6 min-h-0 overflow-y-auto no-scrollbar xl:overflow-hidden">
         {/* Left ΓÇö GIS Map */}
-        <div className="xl:w-[45%] flex flex-col gap-4 h-[500px] md:min-h-[400px] shrink-0">
+        <div className="xl:w-[45%] flex flex-col gap-4 h-[600px] xl:h-[75vh]">
           <div className="flex-1 rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 relative bg-[#F4F2EC]">
             {!loading && (
-              <MapContainer center={[25.8, 85.8]} zoom={window.innerWidth < 1024 ? 7.5 : 7} scrollWheelZoom={true} dragging={true} tap={false} className="w-full h-full" zoomControl={true}>
+              <MapContainer center={[25.8, 85.8]} zoom={window.innerWidth < 1024 ? 6.5 : 7} scrollWheelZoom={true} dragging={true} tap={false} className="w-full h-full" zoomControl={true}>
                 <TileLayer attribution='&copy; CARTO' url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                 {geoData && (
                   <GeoJSON

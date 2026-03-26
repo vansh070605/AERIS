@@ -20,7 +20,7 @@ export default function PredictorPage() {
     setLoading(true);
     try {
       const payload = { ...formData, Rainfall_mm: parseFloat(formData.Rainfall_mm), River_Level_m: parseFloat(formData.River_Level_m), Danger_Level_m: parseFloat(formData.Danger_Level_m), Population: parseInt(formData.Population), Crop_Area_ha: parseFloat(formData.Crop_Area_ha), Month: parseInt(formData.Month), Year: parseInt(formData.Year) };
-      const res = await fetch('http://localhost:8000/predict', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res = await fetch(`http://${window.location.hostname}:8000/predict`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setResult(data.probability);
