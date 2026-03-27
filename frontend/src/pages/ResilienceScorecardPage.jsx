@@ -4,9 +4,9 @@ import GuidancePopover from '../components/GuidancePopover';
 import { 
   RadialBarChart, RadialBar, BarChart, Bar, XAxis, YAxis, Tooltip, 
   ResponsiveContainer, Cell, RadarChart, PolarGrid, PolarAngleAxis, 
-  PolarRadiusAxis, Radar 
+  PolarRadiusAxis, Radar, AreaChart, Area
 } from 'recharts';
-import { Search, ArrowUpDown, Shield, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { Search, ArrowUpDown, Shield, AlertTriangle, CheckCircle2, Info, Download, TrendingUp, Layers, Zap, Activity } from 'lucide-react';
 
 const districtData = [
   { rank: 1, dist: "Patna", infra: 92, response: "38m", vuln: "Low", score: 94, radar: [ { subject: 'Infra', A: 92 }, { subject: 'Response', A: 95 }, { subject: 'Economic', A: 88 }, { subject: 'Social', A: 92 }, { subject: 'Health', A: 90 } ] },
@@ -28,6 +28,22 @@ export default function ResilienceScorecardPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: 'rank', direction: 'asc' });
   const [selectedDistrict, setSelectedDistrict] = useState(districtData[0]);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: 'spring', damping: 25, stiffness: 200 } }
+  };
 
   const filteredData = useMemo(() => {
     let sorted = [...districtData].filter(d => 
@@ -52,12 +68,16 @@ export default function ResilienceScorecardPage() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col pb-12 overflow-y-auto no-scrollbar bg-[#F8F9F8]">
-      {/* Dynamic Header */}
-      <div className="mb-8 p-6 md:p-8 bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-black/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    <div className="w-full h-full flex flex-col pb-12 overflow-y-auto no-scrollbar bg-[#F8F9F8] px-4 md:px-8">
+      {/* Premium System Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8 pt-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
+      >
         <div>
           <div className="flex items-center gap-4">
-            <h2 className="text-2xl md:text-5xl font-serif text-[#1A1D1A] tracking-tight">Resilience Scorecard</h2>
+            <h2 className="text-4xl md:text-6xl font-serif text-[#1A1D1A] tracking-tight leading-none">Resilience.<br /><span className="text-black/20 italic">Scorecard.</span></h2>
             <GuidancePopover 
               title="Metric Calibration"
               items={[
@@ -67,93 +87,146 @@ export default function ResilienceScorecardPage() {
               ]}
             />
           </div>
-          <div className="flex items-center gap-3 mt-3">
-             <span className="px-3 py-1 bg-[#0B3D3D]/10 text-[#0B3D3D] text-[10px] font-bold uppercase tracking-widest rounded-full">Active Monitoring</span>
-             <span className="text-black/40 text-xs font-medium italic">Data Refresh 12m ago</span>
-          </div>
+          <p className="mt-4 text-[10px] font-black uppercase tracking-[0.3em] text-[#0B3D3D]/40">Intelligence Framework v2.4.0 • BIHAR STATE</p>
         </div>
         
         <div className="flex items-center gap-4 w-full md:w-auto">
-          <div className="relative flex-grow md:w-64">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
+          <div className="relative flex-grow md:w-72">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0B3D3D]/30" />
             <input 
               type="text" 
-              placeholder="Search subsector..." 
+              placeholder="Filter by subsector..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-6 py-3 bg-black/5 border-none rounded-2xl text-sm focus:ring-2 focus:ring-[#0B3D3D]/20 transition-all outline-none"
+              className="w-full pl-12 pr-6 py-4 bg-white border border-black/5 rounded-2xl text-sm focus:ring-4 focus:ring-[#0B3D3D]/5 transition-all outline-none shadow-sm"
             />
           </div>
+          <button className="p-4 bg-[#1A1D1A] text-white rounded-2xl hover:bg-black transition-colors shadow-xl shadow-black/10 group">
+            <Download size={20} className="group-hover:scale-110 transition-transform" />
+          </button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Analytics Power Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
-        {/* Core Readiness (Radial) */}
-        <div className="lg:col-span-3 bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-black/5 border border-black/5 flex flex-col items-center justify-between min-h-[350px] md:min-h-[400px]">
-          <div className="w-full text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-black/40 mb-6">Aggregate Index</div>
-          <div className="relative w-full aspect-square max-w-[200px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart cx="50%" cy="50%" innerRadius="70%" outerRadius="100%" barSize={12} data={[stateAverage]} startAngle={90} endAngle={450}>
-                <RadialBar background dataKey="value" cornerRadius={30} />
-              </RadialBarChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="text-5xl font-serif text-[#0B3D3D]">{stateAverage.value}%</div>
-              <div className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 mt-1">Statewide</div>
-            </div>
-          </div>
-          <div className="w-full mt-6 space-y-4">
-             <div className="p-4 bg-teal-50/50 rounded-2xl border border-teal-100/50 flex items-center justify-between">
-                <span className="text-[10px] font-bold text-teal-800 uppercase">Trend</span>
-                <span className="text-sm font-serif text-teal-900">+4.2 pts</span>
+      {/* High-Fidelity KPI Grid */}
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
+      >
+        {[
+          { label: 'Readiness Index', val: `${stateAverage.value}%`, trend: '+4.2', icon: Shield, color: 'text-[#0B3D3D]', bg: 'bg-[#0B3D3D]/5' },
+          { label: 'Infrastructure', val: '72/100', trend: '+12.1', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50' },
+          { label: 'Response Velocity', val: '1.4h', trend: '-22%', icon: Activity, color: 'text-teal-600', bg: 'bg-teal-50' },
+          { label: 'Critical Hotspots', val: '12', trend: 'STABLE', icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50' }
+        ].map((kpi, i) => (
+          <motion.div key={i} variants={itemVariants} className={`p-6 rounded-[2rem] border border-black/5 shadow-xl shadow-black/5 ${kpi.bg} relative overflow-hidden group hover:-translate-y-1 transition-transform duration-500`}>
+             <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+               <kpi.icon size={120} />
              </div>
-          </div>
-        </div>
+             <div className="flex justify-between items-start mb-4">
+               <div className={`p-3 rounded-2xl bg-white shadow-sm ${kpi.color}`}>
+                 <kpi.icon size={20} />
+               </div>
+               <span className={`text-[10px] font-black px-2 py-1 rounded-full bg-white/50 border border-black/5 ${kpi.color}`}>{kpi.trend}</span>
+             </div>
+             <div className="text-3xl font-serif text-[#1A1D1A] mb-1">{kpi.val}</div>
+             <div className="text-[10px] font-bold uppercase tracking-widest text-black/40">{kpi.label}</div>
+          </motion.div>
+        ))}
+      </motion.div>
 
-        {/* Sector Comparison (Bar) */}
-        <div className="lg:col-span-5 bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-black/5 border border-black/5 min-h-[350px] md:min-h-[400px]">
-          <div className="flex justify-between items-center mb-6">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-black/40">Relative Rankings</div>
-            <div className="text-[10px] text-black/30">Representative Subset</div>
+      <motion.div initial={{opacity:0, scale:0.98}} animate={{opacity:1, scale:1}} transition={{delay: 0.4}} className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
+        {/* District Detail (Radar) - Repositioned for Prominence */}
+        <div className="lg:col-span-4 bg-[#1A1D1A] p-6 md:p-8 rounded-[3rem] shadow-2xl text-white overflow-hidden relative min-h-[450px] group transition-all duration-700 hover:shadow-[#0B3D3D]/20">
+          <div className="absolute top-8 left-8">
+            <div className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1">Sector DNA Map</div>
+            <h3 className="text-2xl font-serif text-teal-400">{selectedDistrict.dist}</h3>
           </div>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={districtData.slice(0, 8)}>
-              <XAxis dataKey="dist" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#000', opacity: 0.4 }} dy={8} />
-              <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '15px', border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.1)' }} />
-              <Bar dataKey="score" radius={[6, 6, 6, 6]} barSize={28}>
-                {districtData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.score > 85 ? '#0B3D3D' : '#1A1D1A'} fillOpacity={0.85} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* District Detail (Radar) */}
-        <div className="lg:col-span-4 bg-[#1A1D1A] p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl text-white overflow-hidden relative min-h-[350px] md:min-h-[400px]">
-          <div className="absolute top-8 left-8 text-[10px] font-bold uppercase tracking-widest opacity-40">Resilience DNA: {selectedDistrict.dist}</div>
-          <div className="mt-8 w-full h-full max-h-[250px]">
+          
+          <div className="mt-12 w-full h-[300px] pointer-events-none">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={selectedDistrict.radar}>
-                <PolarGrid stroke="rgba(255,255,255,0.1)" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#fff', fontSize: 10, opacity: 0.6 }} />
-                <Radar name={selectedDistrict.dist} dataKey="A" stroke="#4FD1C5" fill="#4FD1C5" fillOpacity={0.4} />
+                <PolarGrid stroke="rgba(255,255,255,0.05)" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#fff', fontSize: 10, opacity: 0.4, fontWeight: 700 }} />
+                <Radar 
+                  name={selectedDistrict.dist} 
+                  dataKey="A" 
+                  stroke="#4FD1C5" 
+                  strokeWidth={2}
+                  fill="#4FD1C5" 
+                  fillOpacity={0.15} 
+                />
               </RadarChart>
             </ResponsiveContainer>
           </div>
-          <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end">
+
+          <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end bg-gradient-to-t from-[#1A1D1A] pt-8">
             <div>
-               <div className="text-4xl font-serif">{selectedDistrict.score}</div>
-               <div className="text-[9px] uppercase tracking-widest opacity-50">Composite Index</div>
+               <div className="text-5xl font-serif text-white tracking-tighter tabular-nums leading-none">{selectedDistrict.score}</div>
+               <div className="text-[9px] uppercase tracking-widest opacity-40 font-black mt-2">Index Integrity Score</div>
             </div>
             <div className="text-right">
-               <div className="text-teal-400 font-bold text-xs">#{selectedDistrict.rank}</div>
-               <div className="text-[9px] uppercase tracking-widest opacity-50">State Rank</div>
+               <div className="text-teal-400 font-black tracking-widest text-lg">#{selectedDistrict.rank}</div>
+               <div className="text-[9px] uppercase tracking-widest opacity-40 font-black">Region Rank</div>
             </div>
           </div>
         </div>
-      </div>
+
+        {/* Sector Strength Flow (Area Chart) */}
+        <div className="lg:col-span-8 bg-white p-6 md:p-10 rounded-[3rem] shadow-2xl shadow-black/5 border border-black/5 min-h-[450px] relative overflow-hidden">
+          <div className="flex justify-between items-end mb-10">
+            <div>
+              <div className="text-[10px] font-black uppercase tracking-[0.3em] text-[#0B3D3D]/40 mb-2">Comparative Flow Analytics</div>
+              <h3 className="text-xl font-serif text-[#1A1D1A]">Readiness Dispersion Matrix</h3>
+            </div>
+            <div className="flex gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#0B3D3D]" />
+              <div className="w-2.5 h-2.5 rounded-full bg-black/10" />
+            </div>
+          </div>
+          
+          <div className="w-full h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={districtData.slice(0, 10)}>
+                <defs>
+                  <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0B3D3D" stopOpacity={0.15}/>
+                    <stop offset="95%" stopColor="#0B3D3D" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="dist" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#000', opacity: 0.3, fontWeight: 700 }} />
+                <YAxis hide domain={[0, 100]} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', padding: '16px' }}
+                  itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="score" 
+                  stroke="#0B3D3D" 
+                  strokeWidth={4} 
+                  fillOpacity={1} 
+                  fill="url(#colorScore)" 
+                  animationDuration={2000}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="infra" 
+                  stroke="rgba(0,0,0,0.1)" 
+                  strokeWidth={2} 
+                  strokeDasharray="5 5"
+                  fill="transparent" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="absolute top-0 right-0 p-10 pointer-events-none opacity-[0.03]">
+             <Activity size={300} strokeWidth={0.5} />
+          </div>
+        </div>
+      </motion.div>
 
       {/* Modern Table Card */}
       <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] border border-black/5 shadow-2xl shadow-black/5 overflow-hidden">
@@ -191,42 +264,50 @@ export default function ResilienceScorecardPage() {
                   return (
                     <motion.tr 
                       key={row.dist} 
-                      initial={{ opacity: 0 }} 
-                      animate={{ opacity: 1 }}
+                      layoutId={`row-${row.dist}`}
+                      initial={{ opacity: 0, y: 10 }} 
+                      animate={{ opacity: 1, y: 0 }}
                       onClick={() => setSelectedDistrict(row)}
-                      className={`${isSelected ? 'bg-[#0B3D3D]/5' : 'hover:bg-black/[0.02]'} cursor-pointer transition-colors group`}
+                      className={`${isSelected ? 'bg-[#0B3D3D]/5 relative after:absolute after:left-0 after:top-0 after:bottom-0 after:w-1 after:bg-[#0B3D3D]' : 'hover:bg-black/[0.02]'} cursor-pointer transition-all duration-300 group`}
                     >
                       <td className="p-6">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isSelected ? 'bg-[#0B3D3D] text-white' : 'bg-black/5 text-black/40'}`}>
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-black transition-all duration-500 scale-90 group-hover:scale-100 ${isSelected ? 'bg-[#0B3D3D] text-white' : 'bg-black/5 text-black/40 group-hover:bg-[#0B3D3D]/10'}`}>
                           {row.rank}
                         </div>
                       </td>
                       <td className="p-6">
-                        <div className="font-serif text-lg text-[#1A1D1A] group-hover:text-[#0B3D3D] transition-colors">{row.dist}</div>
-                        <div className="text-[9px] text-black/30 uppercase font-black tracking-widest mt-0.5">District ID: 0{row.rank}A</div>
+                        <div className="flex items-center gap-4">
+                           <div className="w-10 h-10 rounded-2xl bg-[#0B3D3D]/5 flex items-center justify-center group-hover:bg-[#0B3D3D]/10 transition-colors">
+                             <Layers size={16} className="text-[#0B3D3D]/40" />
+                           </div>
+                           <div>
+                             <div className="font-serif text-lg text-[#1A1D1A] group-hover:text-[#0B3D3D] transition-colors">{row.dist}</div>
+                             <div className="text-[8px] text-black/30 font-black uppercase tracking-[0.2em] mt-0.5">District ID · AERIS-0{row.rank}</div>
+                           </div>
+                        </div>
                       </td>
                       <td className="p-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-16 h-1 bg-black/5 rounded-full overflow-hidden">
-                            <motion.div initial={{width:0}} animate={{width: `${row.infra}%`}} className={`h-full ${row.infra > 80 ? 'bg-[#0B3D3D]' : row.infra > 50 ? 'bg-amber-500' : 'bg-red-500'}`} />
+                          <div className="w-24 h-1 bg-black/5 rounded-full overflow-hidden">
+                            <motion.div initial={{width:0}} animate={{width: `${row.infra}%`}} className={`h-full ${row.infra > 80 ? 'bg-[#10B981]' : row.infra > 50 ? 'bg-amber-400' : 'bg-red-500'}`} />
                           </div>
-                          <span className="font-mono text-[10px] font-bold text-black/40">{row.infra}%</span>
+                          <span className="font-mono text-[10px] font-black text-black/30 tabular-nums">{row.infra}%</span>
                         </div>
                       </td>
                       <td className="p-6">
                          <div className="flex items-center gap-2">
-                            <Info className="w-3 h-3 text-black/20" />
-                            <span className="text-[10px] font-bold text-black/60 uppercase tracking-tighter">{row.response}</span>
+                            <TrendingUp className={`w-3 h-3 ${parseInt(row.response) < 60 ? 'text-teal-500' : 'text-amber-500'}`} />
+                            <span className="text-[10px] font-black text-[#1A1D1A]/60 uppercase tracking-tighter tabular-nums">{row.response}</span>
                          </div>
                       </td>
                       <td className="p-6">
-                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${isHigh ? 'border-red-100 bg-red-50 text-red-600' : isMed ? 'border-amber-100 bg-amber-50 text-amber-600' : 'border-teal-100 bg-teal-50 text-[#0B3D3D]'}`}>
-                          {isHigh ? <AlertTriangle className="w-3 h-3" /> : isMed ? <Info className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />}
+                        <div className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-2xl text-[8px] font-black uppercase tracking-[0.15em] border transition-all duration-300 ${isHigh ? 'border-red-100 bg-red-50 text-red-600 shadow-sm shadow-red-100' : isMed ? 'border-amber-100 bg-amber-50 text-amber-600' : 'border-teal-100 bg-teal-50 text-teal-700'}`}>
+                          {isHigh ? <AlertTriangle className="w-3 h-3" /> : isMed ? <Zap className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
                           {row.vuln}
                         </div>
                       </td>
                       <td className="p-6 text-right">
-                        <div className="font-serif text-3xl font-bold text-[#1A1D1A] group-hover:scale-105 transition-transform duration-300">
+                        <div className="font-serif text-4xl font-bold text-[#1A1D1A] group-hover:scale-110 transition-transform duration-500 tabular-nums origin-right">
                           {row.score}
                         </div>
                       </td>
