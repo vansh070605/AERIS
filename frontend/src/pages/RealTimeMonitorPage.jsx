@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import GuidancePopover from '../components/GuidancePopover';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import { Radio, TrendingUp, TrendingDown, Minus, AlertTriangle, Shield, Waves, Activity, RefreshCw } from 'lucide-react';
 
@@ -94,7 +95,17 @@ export default function RealTimeMonitorPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif text-[#1A1D1A] tracking-tight leading-tight">River Pulse.</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif text-[#1A1D1A] tracking-tight leading-tight">River Pulse.</h2>
+            <GuidancePopover 
+              title="Telemetry Systems"
+              items={[
+                { label: "Sensor Latency", content: "Gauges transmit data via LoRaWAN/Satellite. Maximum latency is 10s during normal operations.", color: "#0B3D3D" },
+                { label: "Station Calibration", content: "Zero-level (MSL) is calibrated monthly against Survey of India benchmarks.", color: "#3B82F6" },
+                { label: "Breach Logic", content: "Breach probability is calculated using current level velocity and embankment soil saturation models.", color: "#F59E0B" }
+              ]}
+            />
+          </div>
           <p className="text-black/50 text-xs mt-2 tracking-widest uppercase font-bold">
             Live Telemetry · {stations.length} Gauges · 5 Basins
           </p>
@@ -169,7 +180,7 @@ export default function RealTimeMonitorPage() {
               </MapContainer>
             )}
             {/* Map Legend */}
-            <div className="absolute bottom-4 left-4 z-[1000] bg-white/90 backdrop-blur-md rounded-xl px-4 py-3 shadow-lg border border-black/5">
+            <div className="absolute bottom-4 left-4 z-[40] bg-white/90 backdrop-blur-md rounded-xl px-4 py-3 shadow-lg border border-black/5">
               <div className="text-[8px] font-bold uppercase tracking-widest text-black/40 mb-2">Alert Status</div>
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#991b1b]" /><span className="text-[9px] font-bold text-black/60">Danger Level</span></div>

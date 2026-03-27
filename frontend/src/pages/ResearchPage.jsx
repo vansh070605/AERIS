@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import GuidancePopover from '../components/GuidancePopover';
 import { AlertTriangle, XCircle, CheckCircle, Zap, Brain, Map, BarChart3, Shield, Radio, BookOpen, ArrowRight } from 'lucide-react';
 
 const fadeUp = (delay = 0) => ({ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] } });
@@ -20,7 +21,17 @@ export default function ResearchPage() {
 
       {/* Hero */}
       <motion.div {...fadeUp()} className="mb-16 border-b border-black/5 pb-12">
-        <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#0B3D3D] mb-4">Research Overview</div>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#0B3D3D]">Research Overview</div>
+          <GuidancePopover 
+            title="Scientific Context"
+            items={[
+              { label: "Data Lineage", content: "Methodology draws on 15 years of Bihar State Disaster Management (BSDMA) historical records.", color: "#0B3D3D" },
+              { label: "Model Convergence", content: "XGBoost architecture was selected for its high performance on sparse, non-linear hydraulic datasets.", color: "#F59E0B" },
+              { label: "Peer Review", content: "Platform logic is aligned with Sendai Framework for Disaster Risk Reduction (2015-2030).", color: "#10B981" }
+            ]}
+          />
+        </div>
         <h1 className="text-4xl md:text-7xl font-serif text-[#1A1D1A] tracking-tight leading-[1.05] mb-6 max-w-3xl">
           Rethinking Flood<br />Response with AI.
         </h1>

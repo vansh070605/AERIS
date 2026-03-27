@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import GuidancePopover from '../components/GuidancePopover';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, AreaChart, Area, ReferenceLine, ReferenceDot 
@@ -114,7 +115,16 @@ export default function PostLearningPage() {
           <div>
              <div className="flex items-center gap-2 mb-4">
                 <div className="px-3 py-1 bg-teal-500/20 text-teal-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-teal-500/30">Intelligence Archive</div>
-                <span className="text-white/40 text-xs font-medium">Restricted Access // Post-Mortem</span>
+                <GuidancePopover 
+                  title="Archive Methodology"
+                  items={[
+                    { label: "Forensic Reconstruction", content: "Events are re-simulated using high-fidelity historical telemetry (Gauges + Satellites).", color: "#0D9488" },
+                    { label: "HFL Reference", content: "High Flood Level (HFL) markers represent the historical catastrophic peak for each basin.", color: "#ef4444" },
+                    { label: "AI Post-Mortem", content: "System identifies gaps between 'Predicted Response' and 'Observed Reality' to refine ML weights.", color: "#3B82F6" }
+                  ]}
+                  dark={true}
+                />
+                <span className="text-white/40 text-xs font-medium ml-2">Restricted Access // Post-Mortem</span>
              </div>
              <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif tracking-tight leading-tight md:leading-none mb-4">{activeEvent.title}</h2>
              <p className="text-white/50 text-sm max-w-xl leading-relaxed">

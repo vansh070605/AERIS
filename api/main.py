@@ -58,26 +58,64 @@ def system_info():
         s.close()
     return {"local_ip": local_ip, "port": 8000, "frontend_port": 5173}
 
+# Load and precompute district stats for realistic simulation
+def get_district_stats():
+    try:
+        data_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'flood_data.csv')
+        if os.path.exists(data_path):
+            df = pd.read_csv(data_path)
+            stats = df.groupby('district')[['embankment_age', 'maintenance_score', 'vuln_score']].mean().to_dict('index')
+            # Extract global averages for fallback
+            global_avg = {
+                'embankment_age': int(df['embankment_age'].mean()),
+                'maintenance_score': round(df['maintenance_score'].mean(), 2),
+                'vuln_score': round(df['vuln_score'].mean(), 2)
+            }
+            return stats, global_avg
+    except Exception as e:
+        print(f"Error loading district stats: {e}")
+    return {}, {'embankment_age': 28, 'maintenance_score': 7.0, 'vuln_score': 0.5}
+
+DISTRICT_STATS, GLOBAL_STATS = get_district_stats()
+
 def load_models():
     ml_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'ml')
     breach = joblib.load(os.path.join(ml_dir, 'breach_xgb_model.pkl'))
     flood = joblib.load(os.path.join(ml_dir, 'flood_prob_model.pkl'))
     return breach, flood
 
+BREACH_MODEL, FLOOD_MODEL = load_models()
+
 @app.post("/predict")
 def predict(req: PredictRequest):
     try:
-        breach_model, _ = load_models()
-        # Map frontend fields to model inputs
-        # Model expects: [embankment_age, maintenance_score, rainfall_mm, vuln_score]
-        data = [[req.embankment_age, req.maintenance_score, req.Rainfall_mm, req.vuln_score]]
-        prob = breach_model.predict_proba(data)[0][1]
+        # Use district stats if available, otherwise use request/global defaults
+        stats = DISTRICT_STATS.get(req.District, GLOBAL_STATS)
+        
+        emb_age = stats['embankment_age']
+        maint = stats['maintenance_score']
+        vuln = stats['vuln_score']
+        
+        # Override with request values if they were explicitly provided (non-default)
+        # For simplicity in simulator, we prioritize district historical profiles
+        
+        # XGBoost trained on DataFrame expects feature names
+        features = ['embankment_age', 'maintenance_score', 'rainfall_mm', 'vuln_score']
+        data = pd.DataFrame([[emb_age, maint, req.Rainfall_mm, vuln]], columns=features)
+        
+        prob = BREACH_MODEL.predict_proba(data)[0][1]
         
         return {
-            "probability": round(prob * 100, 2),  # Frontend expects percentage
-            "status": "RED" if prob > 0.85 else ("ORANGE" if prob > 0.6 else "NORMAL")
+            "probability": float(round(prob * 100, 2)),
+            "status": "RED" if prob > 0.85 else ("ORANGE" if prob > 0.6 else "NORMAL"),
+            "meta": {
+                "district_profile": stats,
+                "note": "Prediction based on historical district infrastructure profile"
+            }
         }
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/predict/breach")

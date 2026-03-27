@@ -91,16 +91,69 @@ export default function Layout() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[60] bg-white lg:hidden flex flex-col p-8 pt-24"
+            className="fixed inset-0 z-[100] bg-[#FAF9F6]/80 backdrop-blur-3xl lg:hidden flex flex-col p-8 pt-12"
           >
-            <button 
-              className="absolute top-8 right-8 p-2 text-[#0B3D3D]"
-              onClick={() => setIsMobileMenuOpen(false)}
+            {/* Menu Header with Branding */}
+            <div className="flex justify-between items-center mb-12">
+              <h1 className="text-3xl font-serif text-[#1A1D1A]">AERIS.</h1>
+              <button 
+                className="p-3 bg-black/5 hover:bg-black/10 rounded-full transition-colors group z-[101]"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <X size={24} className="text-[#0B3D3D] group-hover:scale-110 transition-transform" />
+              </button>
+            </div>
+
+            {/* Staggered Navigation Links */}
+            <motion.div 
+              className="flex flex-col gap-6"
+              variants={{
+                show: { transition: { staggerChildren: 0.1 } }
+              }}
+              initial="hidden"
+              animate="show"
             >
-              <X size={32} />
-            </button>
-            <div className="flex flex-col gap-4">
-              <NavLinks />
+              {[
+                { id: 'home', to: '/', label: 'The Map', icon: Map },
+                { id: 'forecast', to: '/forecast', label: 'Simulator', icon: Activity },
+                { id: 'predictor', to: '/predictor', label: 'Predictor', icon: Settings },
+                { id: 'pulse', to: '/telemetry', label: 'Pulse', icon: Radio },
+                { id: 'post', to: '/post-learning', label: 'Post-Mortem', icon: BookOpen },
+                { id: 'score', to: '/scorecard', label: 'Scorecard', icon: ShieldAlert },
+                { id: 'research', to: '/research', label: 'Research', icon: BookOpen },
+              ].map((link, idx) => (
+                <motion.div
+                  key={link.id}
+                  variants={{
+                    hidden: { opacity: 0, x: 20 },
+                    show: { opacity: 1, x: 0 }
+                  }}
+                >
+                  <NavLink 
+                    to={link.to} 
+                    className={({isActive}) => `flex items-center gap-4 text-2xl font-serif transition-all duration-300 ${isActive ? 'text-[#0B3D3D] translate-x-2' : 'text-black/40 hover:text-black/80'}`}
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <link.icon size={24} className={isActive ? 'text-[#0B3D3D]' : 'text-black/20'} />
+                        {link.label}
+                      </>
+                    )}
+                  </NavLink>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Menu Footer */}
+            <div className="mt-auto border-t border-black/5 pt-8 flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0B3D3D]/60 whitespace-nowrap">System Status: Nominal</span>
+              </div>
+              <p className="text-[9px] text-black/30 font-medium leading-relaxed">
+                AERIS Intelligence Platform <br />
+                Bihar Flood Resilience Framework v2.4.0
+              </p>
             </div>
           </motion.div>
         )}
@@ -127,7 +180,7 @@ export default function Layout() {
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="w-full min-h-full max-w-[1400px] mx-auto"
           >
             <Outlet />

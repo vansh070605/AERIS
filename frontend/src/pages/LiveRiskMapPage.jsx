@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import GuidancePopover from '../components/GuidancePopover';
 import { MapContainer, TileLayer, GeoJSON, Tooltip } from 'react-leaflet';
 import { Info, Users, Wheat, AlertTriangle, Activity, Database, Radar, TrendingUp } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
@@ -112,9 +113,19 @@ export default function LiveRiskMapPage() {
       {/* Editorial Text Left Column */}
       <div className="order-1 xl:w-[380px] flex flex-col justify-between py-4 shrink-0">
           <div>
-            <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, ease:[0.16,1,0.3,1] }} className="text-4xl md:text-7xl font-serif text-[#1A1D1A] leading-[1.02] tracking-tight mb-4">
-                Predict<br />the tides.
-            </motion.h1>
+            <div className="flex items-center gap-4 mb-4">
+              <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, ease:[0.16,1,0.3,1] }} className="text-4xl md:text-7xl font-serif text-[#1A1D1A] leading-[1.02] tracking-tight">
+                  Predict<br />the tides.
+              </motion.h1>
+              <GuidancePopover 
+                title="Map Intelligence"
+                items={[
+                  { label: "High Risk Districts", content: "Supaul, Darbhanga, Madhubani, and Saharsa are flagged based on 24h satellite rainfall accumulation.", color: "#991b1b" },
+                  { label: "Metric Sync", content: "Telemetry is updated every 5 minutes from terrestrial sensors and ESA Sentinel-1 data streams.", color: "#0B3D3D" },
+                  { label: "Population Metrics", content: "Risk estimates are cross-referenced with the 2021 census data and current migration trends.", color: "#b45309" }
+                ]}
+              />
+            </div>
             <p className="text-black/40 text-sm leading-relaxed mb-6 max-w-[340px]">
               This interactive map shows real-time flood risk levels across all Bihar districts. Click any district to see population at risk, crop damage estimates, and a 24-hour risk trend powered by our AI models.
             </p>

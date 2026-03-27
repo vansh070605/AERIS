@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import GuidancePopover from '../components/GuidancePopover';
 import { 
   RadialBarChart, RadialBar, BarChart, Bar, XAxis, YAxis, Tooltip, 
   ResponsiveContainer, Cell, RadarChart, PolarGrid, PolarAngleAxis, 
@@ -55,7 +56,17 @@ export default function ResilienceScorecardPage() {
       {/* Dynamic Header */}
       <div className="mb-8 p-6 md:p-8 bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-black/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h2 className="text-2xl md:text-5xl font-serif text-[#1A1D1A] tracking-tight">Resilience Scorecard</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl md:text-5xl font-serif text-[#1A1D1A] tracking-tight">Resilience Scorecard</h2>
+            <GuidancePopover 
+              title="Metric Calibration"
+              items={[
+                { label: "Composite Index", content: "Weighted average of Infrastructure (40%), Response (30%), and Socio-Economic factors (30%).", color: "#0B3D3D" },
+                { label: "Rank Inversion", content: "Lower ranking (e.g., #38) indicates critical vulnerability and prioritized resource allocation.", color: "#991b1b" },
+                { label: "DNA Mapping", content: "Radar charts visualize sectoral strengths (e.g., strong Social ties vs. weak structural Infra).", color: "#3B82F6" }
+              ]}
+            />
+          </div>
           <div className="flex items-center gap-3 mt-3">
              <span className="px-3 py-1 bg-[#0B3D3D]/10 text-[#0B3D3D] text-[10px] font-bold uppercase tracking-widest rounded-full">Active Monitoring</span>
              <span className="text-black/40 text-xs font-medium italic">Data Refresh 12m ago</span>

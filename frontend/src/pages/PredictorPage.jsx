@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import GuidancePopover from '../components/GuidancePopover';
 
 export default function PredictorPage() {
   const [formData, setFormData] = useState({
@@ -35,7 +36,17 @@ export default function PredictorPage() {
     <div className="w-full h-full flex flex-col pb-12 lg:flex-row gap-8 lg:gap-12 overflow-y-auto no-scrollbar">
       <div className="lg:w-1/2 flex flex-col">
         <div className="mb-8 border-b border-black/5 pb-8">
-          <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif text-[#1A1D1A] tracking-tight">Telemetry Input</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif text-[#1A1D1A] tracking-tight">Telemetry Input</h2>
+            <GuidancePopover 
+              title="Inference Engine"
+              items={[
+                { label: "Predictive Thresholds", content: "Model identifies 'Severe Flood' when probability exceeds 75%. Baseline risk is 10-15% during dry periods.", color: "#0B3D3D" },
+                { label: "Data Overrides", content: "Manual input bypasses live satellite feeds to test specific hydraulic stress scenarios.", color: "#3B82F6" },
+                { label: "Model Latency", content: "XGBoost inference typically resolves in 120ms. The UI simulates 'Synthesis' for clarity.", color: "#10B981" }
+              ]}
+            />
+          </div>
           <p className="text-black/50 text-xs mt-4 tracking-widest uppercase font-bold">Manual parameter override for predictive modeling</p>
           <p className="text-black/40 text-sm mt-3 max-w-lg leading-relaxed">
             Enter specific conditions for any Bihar district — rainfall, river level, population at risk — and our AI model will calculate the probability of severe flooding. This lets you test "what-if" scenarios to support decision-making.
