@@ -15,7 +15,8 @@ export default function PredictorPage() {
     Population: '500000',
     Crop_Area_ha: '25000',
     Month: '7',
-    Year: '2026'
+    Year: '2026',
+    Day: String(new Date().getDate())
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -92,7 +93,8 @@ export default function PredictorPage() {
         Population: parseInt(formData.Population), 
         Crop_Area_ha: parseFloat(formData.Crop_Area_ha), 
         Month: parseInt(formData.Month), 
-        Year: parseInt(formData.Year) 
+        Year: parseInt(formData.Year),
+        Day: parseInt(formData.Day) || new Date().getDate()
       };
       
       const res = await fetch(`http://${window.location.hostname}:8000/predict`, { 
@@ -156,7 +158,7 @@ export default function PredictorPage() {
               <GuidancePopover 
                 title="Scenario Calibration"
                 items={[
-                  { label: "Real-time Synthesis", content: "Adjusting any parameter triggers a recalculation of the XGBoost probability model in the background.", color: "#0B3D3D" },
+                  { label: "Real-time Synthesis", content: "Adjusting any parameter triggers a recalculation of the Logistic Regression model (94.7% accuracy, F1: 0.845).", color: "#0B3D3D" },
                   { label: "Parameter Ranges", content: "Rainfall: 0-3000mm. River Level: Relative to Danger Level. Population: Affected demographic.", color: "#3B82F6" }
                 ]}
               />
@@ -418,7 +420,7 @@ export default function PredictorPage() {
                          </div>
                          <div className="flex items-center gap-3 px-2">
                              <CheckCircle2 size={12} className="text-teal-500" />
-                             <span className="text-[8px] font-black uppercase tracking-widest text-black/30">Model Calibrated: XGBoost Ensemble v4.1</span>
+                             <span className="text-[8px] font-black uppercase tracking-widest text-black/30">Model: Logistic Regression · Acc 94.7% · F1 0.845</span>
                          </div>
                       </div>
 
