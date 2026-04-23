@@ -420,7 +420,7 @@ export default function PredictorPage() {
                          </div>
                          <div className="flex items-center gap-3 px-2">
                              <CheckCircle2 size={12} className="text-teal-500" />
-                             <span className="text-[8px] font-black uppercase tracking-widest text-black/30">Model: Logistic Regression · Acc 94.7% · F1 0.845</span>
+                             <span className="text-[8px] font-black uppercase tracking-widest text-black/30">Model: Logistic Regression Â· Acc 94.7% Â· F1 0.845</span>
                          </div>
                       </div>
 
