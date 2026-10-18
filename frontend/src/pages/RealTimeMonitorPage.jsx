@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import GuidancePopover from '../components/GuidancePopover';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import { Radio, TrendingUp, TrendingDown, Minus, AlertTriangle, Shield, Waves, Activity, RefreshCw } from 'lucide-react';
+import { API_BASE } from '../config/api';
 
 const REFRESH_INTERVAL = 10;
 
@@ -42,7 +43,7 @@ export default function RealTimeMonitorPage() {
   const tableRef = useRef(null);
 
   const fetchData = () => {
-    fetch(`http://${window.location.hostname}:8000/telemetry/realtime`)
+    fetch(`${API_BASE}/telemetry/realtime`)
       .then(r => { if (!r.ok) throw new Error(`API ${r.status}`); return r.json(); })
       .then(d => { setData(d); setLoading(false); })
       .catch(e => { console.error('Telemetry API offline', e); setLoading(false); });

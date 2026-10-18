@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Smartphone, X, ExternalLink, Info } from 'lucide-react';
+import { API_BASE } from '../config/api';
 
 export default function MobileConnect() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,13 +13,13 @@ export default function MobileConnect() {
     setLoading(true);
     setError(null);
     try {
-      const resp = await fetch(`http://${window.location.hostname}:8000/system/info`);
+      const resp = await fetch(`${API_BASE}/system/info`);
       if (!resp.ok) throw new Error('Backend unreachable');
       const data = await resp.json();
       setSysInfo(data);
     } catch (err) {
       console.error(err);
-      setError("Could not fetch local IP. Make sure backend is running on port 8000.");
+      setError("Could not connect to system telemetry API.");
     } finally {
       setLoading(false);
     }
@@ -29,7 +30,10 @@ export default function MobileConnect() {
     setIsOpen(!isOpen);
   };
 
-  const mobileUrl = sysInfo ? `http://${sysInfo.local_ip}:${sysInfo.frontend_port}` : '';
+  const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const mobileUrl = isLocal && sysInfo 
+    ? `http://${sysInfo.local_ip}:${sysInfo.frontend_port}` 
+    : (typeof window !== 'undefined' ? window.location.href : '');
   const qrImageUrl = mobileUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(mobileUrl)}` : '';
 
   return (

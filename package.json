@@ -1,0 +1,11 @@
+{
+  "name": "aeris",
+  "version": "2.0.0",
+  "private": true,
+  "description": "AERIS — AI-Enhanced Risk Intelligence System",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "dev": "cd frontend && npm run dev",
+    "preview": "cd frontend && npm run preview"
+  }
+}

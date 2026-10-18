@@ -1,0 +1,28 @@
+# Deep learning & training notebooks
+DL/
+model_training/
+perc/
+gis/
+
+# Raw training data & plots
+data/*.ipynb
+data/*.png
+data/bihar_flood_data.csv
+
+# Git & documentation
+.git/
+.github/
+docs/
+README.md
+
+# Dependencies & caches
+node_modules/
+frontend/node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Dev requirements
+requirements-dev.txt

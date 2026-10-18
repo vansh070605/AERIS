@@ -1,10 +1,29 @@
-
+# Virtual Environments
 venv/
 .venv/
-node_modules/
-__pycache__/
-*.pkl
-*.dll
 dl_env/
+
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Python cache & artifacts
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.dll
+*.log
+
+# Build outputs
+frontend/dist/
+dist/
+.vercel/
+
+# Exclude heavy training datasets & notebooks checkpoints
+.ipynb_checkpoints/
+
+# Keep models & bundles tracked
+!ml/*.pkl
+!ml/*.json
+!api/models_bundle.json

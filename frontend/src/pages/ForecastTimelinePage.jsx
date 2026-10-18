@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, animate, useMotionValue, useTransform } from 'framer-motion';
 import GuidancePopover from '../components/GuidancePopover';
 import { MapContainer, TileLayer, GeoJSON, Tooltip } from 'react-leaflet';
+import { API_BASE } from '../config/api';
 
 const NumberTicker = ({ value, colorClass }) => {
   const count = useMotionValue(0);
@@ -115,7 +116,7 @@ export default function ForecastTimelinePage() {
         Day: day
       };
       
-      const res = await fetch(`http://${window.location.hostname}:8000/predict`, {
+      const res = await fetch(`${API_BASE}/predict`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

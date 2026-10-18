@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { CloudRain, CloudLightning, Droplets, Wind, AlertTriangle, Shield, CheckCircle2, Info, ChevronRight, Activity, Zap, Waves, Map as MapIcon, Database, Users, Landmark, AlertCircle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import GuidancePopover from '../components/GuidancePopover';
+import { API_BASE } from '../config/api';
 import 'leaflet/dist/leaflet.css';
 
 export default function PredictorPage() {
@@ -97,7 +98,7 @@ export default function PredictorPage() {
         Day: parseInt(formData.Day) || new Date().getDate()
       };
       
-      const res = await fetch(`http://${window.location.hostname}:8000/predict`, { 
+      const res = await fetch(`${API_BASE}/predict`, { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify(payload) 
@@ -122,7 +123,7 @@ export default function PredictorPage() {
 
       // Fetch 7-day forecast trend
       const vuln = data.meta?.district_profile?.vuln_score || 0.5;
-      const forecastRes = await fetch(`http://${window.location.hostname}:8000/predict/7day_forecast`, {
+      const forecastRes = await fetch(`${API_BASE}/predict/7day_forecast`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rainfall_mm: payload.Rainfall_mm, vuln_score: vuln })

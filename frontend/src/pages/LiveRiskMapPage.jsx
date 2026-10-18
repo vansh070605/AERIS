@@ -4,6 +4,7 @@ import GuidancePopover from '../components/GuidancePopover';
 import { MapContainer, TileLayer, GeoJSON, Tooltip } from 'react-leaflet';
 import { Info, Users, Wheat, AlertTriangle, Activity, Database, Radar, TrendingUp } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
+import { API_BASE } from '../config/api';
 
 export default function LiveRiskMapPage() {
   const [geoData, setGeoData] = useState(null);
@@ -23,7 +24,7 @@ export default function LiveRiskMapPage() {
     fetch('/bihar_districts_real.geojson').then(r => r.json()).then(setGeoData).catch(()=>console.log('geo err'));
     
     const fetchRisk = () => {
-      fetch(`http://${window.location.hostname}:8000/risk/situation_room`)
+      fetch(`${API_BASE}/risk/situation_room`)
         .then(r => { if (!r.ok) throw new Error(`API ${r.status}`); return r.json(); })
         .then(data => {
             setRiskData({
